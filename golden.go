@@ -1,11 +1,9 @@
 package golden
 
 import (
-	"github.com/stretchr/testify/assert"
 	"log"
 	"path"
 	"sync"
-	"testing"
 )
 
 type Golden struct {
@@ -122,27 +120,6 @@ type Failable interface {
 	Errorf(format string, args ...any)
 	Helper()
 	Name() string
-}
-
-/*
-TSpy is a replacement of *testing.T for some tests of the golden library. With
-it, we can spy if the Verify method fails when differences between subject and
-snapshot are found
-*/
-type TSpy struct {
-	*testing.T
-	failed bool
-}
-
-func (t *TSpy) Errorf(format string, args ...any) {
-	t.failed = true
-}
-
-/*
-AssertFailedTest allows us to spy on TSpy
-*/
-func AssertFailedTest(t *testing.T, gt *TSpy) {
-	assert.True(t, gt.failed)
 }
 
 type Normalizer interface {

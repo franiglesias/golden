@@ -35,6 +35,21 @@ func TestMemFs(t *testing.T) {
 		assert.Equal(t, "The content we wanted.", string(content))
 	})
 
+	t.Run("should know if file exists", func(t *testing.T) {
+		filePath := "file_to_read.snap"
+		err := memFs.WriteFile(filePath, []byte("The content we wanted."))
+		assert.NoError(t, err)
+		exists, err := memFs.Exists(filePath)
+		assert.NoError(t, err)
+		assert.True(t, exists)
+	})
+
+	t.Run("should know if file does not exist", func(t *testing.T) {
+		exists, err := memFs.Exists("some/file.snap")
+		assert.NoError(t, err)
+		assert.False(t, exists)
+	})
+
 	t.Run("should return error if not found", func(t *testing.T) {
 		filePath := "no_existent.snap"
 		_, err := memFs.ReadFile(filePath)

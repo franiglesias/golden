@@ -2,7 +2,6 @@ package golden_test
 
 import (
 	"golden"
-	"strconv"
 	"testing"
 )
 
@@ -26,7 +25,7 @@ func TestVerify(t *testing.T) {
 	t.Run("should write subject as snapshot content", func(t *testing.T) {
 		subject := "some output."
 		golden.Verify(t, subject)
-		expected := []byte(strconv.Quote(subject))
+		expected := []byte(subject)
 		golden.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_write_subject_as_snapshot_content.snap", expected)
 	})
 
@@ -35,7 +34,7 @@ func TestVerify(t *testing.T) {
 		golden.Verify(&gt, subject)
 		modified := "different output."
 		golden.Verify(&gt, modified)
-		expected := []byte(strconv.Quote(subject))
+		expected := []byte(subject)
 		// When used this way, t.Name() is not used
 		golden.AssertContentWasStored(t, fs, "__snapshots/TestVerify.snap", expected)
 	})

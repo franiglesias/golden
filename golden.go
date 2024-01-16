@@ -1,7 +1,6 @@
 package golden
 
 import (
-	"encoding/json"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"path"
@@ -11,10 +10,11 @@ import (
 
 type Golden struct {
 	sync.RWMutex
-	fs     Vfs
-	folder string
-	ext    string
-	name   string
+	fs         Vfs
+	normalizer Normalizer
+	folder     string
+	ext        string
+	name       string
 }
 
 func (g *Golden) Verify(t Failable, s any) {
@@ -24,25 +24,25 @@ func (g *Golden) Verify(t Failable, s any) {
 	g.name = t.Name()
 	name := g.snapshotPath()
 
-	n := g.normalize(s)
+	subject := g.normalize(s)
 
 	snapshotExists := g.snapshotExists(name)
 
 	if !snapshotExists {
-		g.writeSnapshot(name, n)
+		g.writeSnapshot(name, subject)
 	}
 
 	snapshot := g.readSnapshot(name)
 
-	if string(snapshot) != string(n) {
+	if string(snapshot) != subject {
 		t.Errorf("There are differences")
 	}
 
 	g.Unlock()
 }
 
-func (g *Golden) normalize(s any) []byte {
-	n, err := json.Marshal(s)
+func (g *Golden) normalize(s any) string {
+	n, err := g.normalizer.Normalize(s)
 	if err != nil {
 		log.Fatalf("could not normalize subject %s: %s", n, err)
 	}
@@ -57,8 +57,8 @@ func (g *Golden) snapshotExists(name string) bool {
 	return snapshotExists
 }
 
-func (g *Golden) writeSnapshot(name string, n []byte) {
-	err := g.fs.WriteFile(name, n)
+func (g *Golden) writeSnapshot(name string, n string) {
+	err := g.fs.WriteFile(name, []byte(n))
 	if err != nil {
 		log.Fatalf("could not create snapshot %s: %s", name, err)
 	}
@@ -96,8 +96,9 @@ after using other settings.
 */
 func New() *Golden {
 	return &Golden{
-		folder: "__snapshots",
-		ext:    ".snap",
+		folder:     "__snapshots",
+		ext:        ".snap",
+		normalizer: JsonNormalizer{},
 	}
 }
 
@@ -107,9 +108,10 @@ from the beginning. Usually for testing purposes only
 */
 func NewUsingFs(fs Vfs) *Golden {
 	return &Golden{
-		folder: "__snapshots",
-		ext:    ".snap",
-		fs:     fs,
+		folder:     "__snapshots",
+		ext:        ".snap",
+		fs:         fs,
+		normalizer: JsonNormalizer{},
 	}
 }
 
@@ -141,4 +143,8 @@ AssertFailedTest allows us to spy on TSpy
 */
 func AssertFailedTest(t *testing.T, gt *TSpy) {
 	assert.True(t, gt.failed)
+}
+
+type Normalizer interface {
+	Normalize(subject any) (string, error)
 }

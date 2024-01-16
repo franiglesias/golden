@@ -24,27 +24,15 @@ func (g *Golden) Verify(t Failable, s any) {
 	g.name = t.Name()
 	name := g.snapshotPath()
 
-	snapshotExists, err := g.fs.Exists(name)
-	if err != nil {
-		return
-	}
+	n := g.normalize(s)
 
-	n, err := json.Marshal(s)
-	if err != nil {
-		log.Fatalf("could not normalize subject %s: %s", n, err)
-	}
+	snapshotExists := g.snapshotExists(name)
 
 	if !snapshotExists {
-		err = g.fs.WriteFile(name, n)
-		if err != nil {
-			log.Fatalf("could not create snapshot %s: %s", name, err)
-		}
+		g.writeSnapshot(name, n)
 	}
 
-	snapshot, err := g.fs.ReadFile(name)
-	if err != nil {
-		log.Fatalf("could not read snapshot %s: %s", name, err)
-	}
+	snapshot := g.readSnapshot(name)
 
 	if string(snapshot) != string(n) {
 		t.Errorf("There are differences")
@@ -53,9 +41,46 @@ func (g *Golden) Verify(t Failable, s any) {
 	g.Unlock()
 }
 
+func (g *Golden) normalize(s any) []byte {
+	n, err := json.Marshal(s)
+	if err != nil {
+		log.Fatalf("could not normalize subject %s: %s", n, err)
+	}
+	return n
+}
+
+func (g *Golden) snapshotExists(name string) bool {
+	snapshotExists, err := g.fs.Exists(name)
+	if err != nil {
+		log.Fatalf("could not determine if snahpshot %s exists: %s", name, err)
+	}
+	return snapshotExists
+}
+
+func (g *Golden) writeSnapshot(name string, n []byte) {
+	err := g.fs.WriteFile(name, n)
+	if err != nil {
+		log.Fatalf("could not create snapshot %s: %s", name, err)
+	}
+}
+
+func (g *Golden) readSnapshot(name string) []byte {
+	snapshot, err := g.fs.ReadFile(name)
+	if err != nil {
+		log.Fatalf("could not read snapshot %s: %s", name, err)
+	}
+	return snapshot
+}
+
 func (g *Golden) snapshotPath() string {
 	return path.Join(g.folder, g.name+g.ext)
 }
+
+/*
+
+Global vars and functions
+
+*/
 
 var G = New()
 
@@ -76,6 +101,10 @@ func New() *Golden {
 	}
 }
 
+/*
+NewUsingFs initializes a new Golden object allowing us to change some defaults
+from the beginning. Usually for testing purposes only
+*/
 func NewUsingFs(fs Vfs) *Golden {
 	return &Golden{
 		folder: "__snapshots",
@@ -84,12 +113,20 @@ func NewUsingFs(fs Vfs) *Golden {
 	}
 }
 
+/*
+Failable interface allows us to replace *testing.T in the own library tests.
+*/
 type Failable interface {
 	Errorf(format string, args ...any)
 	Helper()
 	Name() string
 }
 
+/*
+TSpy is a replacement of *testing.T for some tests of the golden library. With
+it, we can spy if the Verify method fails when differences between subject and
+snapshot are found
+*/
 type TSpy struct {
 	*testing.T
 	failed bool
@@ -99,6 +136,9 @@ func (t *TSpy) Errorf(format string, args ...any) {
 	t.failed = true
 }
 
+/*
+AssertFailedTest allows us to spy on TSpy
+*/
 func AssertFailedTest(t *testing.T, gt *TSpy) {
 	assert.True(t, gt.failed)
 }

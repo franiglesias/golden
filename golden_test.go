@@ -1,7 +1,7 @@
 package golden_test
 
 import (
-	"golden"
+	"github.com/franiglesias/golden"
 	"testing"
 )
 

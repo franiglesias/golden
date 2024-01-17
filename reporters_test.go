@@ -1,8 +1,8 @@
 package golden_test
 
 import (
+	"github.com/franiglesias/golden"
 	"github.com/stretchr/testify/assert"
-	"golden"
 	"testing"
 )
 

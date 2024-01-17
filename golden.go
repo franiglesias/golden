@@ -33,11 +33,15 @@ func (g *Golden) Verify(t Failable, s any) {
 
 	snapshot := g.readSnapshot(name)
 
-	if string(snapshot) != subject {
-		t.Errorf("%s", g.reporter.Differences(string(snapshot), subject))
+	if snapshot != subject {
+		t.Errorf("%s", g.reportDiff(snapshot, subject))
 	}
 
 	g.Unlock()
+}
+
+func (g *Golden) reportDiff(snapshot string, subject string) string {
+	return g.reporter.Differences(snapshot, subject)
 }
 
 func (g *Golden) normalize(s any) string {
@@ -63,12 +67,12 @@ func (g *Golden) writeSnapshot(name string, n string) {
 	}
 }
 
-func (g *Golden) readSnapshot(name string) []byte {
+func (g *Golden) readSnapshot(name string) string {
 	snapshot, err := g.fs.ReadFile(name)
 	if err != nil {
 		log.Fatalf("could not read snapshot %s: %s", name, err)
 	}
-	return snapshot
+	return string(snapshot)
 }
 
 func (g *Golden) snapshotPath() string {
@@ -117,6 +121,12 @@ func NewUsingFs(fs Vfs) *Golden {
 }
 
 /*
+
+Interfaces
+
+*/
+
+/*
 Failable interface allows us to replace *testing.T in the own library tests.
 */
 type Failable interface {
@@ -125,9 +135,17 @@ type Failable interface {
 	Name() string
 }
 
+/*
+Normalizer normalizes the subject to a string representation that can be compared
+*/
 type Normalizer interface {
 	Normalize(subject any) (string, error)
 }
+
+/*
+DiffReporter is an interface to represent an object that can show differences
+between expected snapshot and subject
+*/
 type DiffReporter interface {
 	Differences(want, got string) string
 }

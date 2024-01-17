@@ -7,23 +7,22 @@ import (
 
 func TestVerify(t *testing.T) {
 	var fs *golden.MemFs
-	var gt golden.TSpy
+	var gld golden.Golden
+	var tSpy golden.TSpy
 
 	setUp := func(t *testing.T) {
 		// Passing t in each setup guarantees that we are using the right name for the snapshot
 
+		// Inits a new instance of Golden
 		// Avoid using real filesystem in test
 		// Inits the fs, so it's empty on each test
 
 		fs = golden.NewMemFs()
-
-		// Inits global G for using test filesystem
-
-		golden.G = golden.NewUsingFs(fs)
+		gld = *golden.NewUsingFs(fs)
 
 		// Replace testing.T with this double to allow spying results
 
-		gt = golden.TSpy{
+		tSpy = golden.TSpy{
 			T: t,
 		}
 	}
@@ -31,29 +30,25 @@ func TestVerify(t *testing.T) {
 	t.Run("should create snapshot if not exists", func(t *testing.T) {
 		setUp(t)
 
-		subject := "some subject."
-		golden.Verify(t, subject)
+		gld.Verify(t, "some subject.")
 		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_create_snapshot_if_not_exists.snap")
 	})
 
 	t.Run("should write subject as snapshot content", func(t *testing.T) {
 		setUp(t)
 
-		subject := "some output."
-		golden.Verify(t, subject)
-		expected := []byte(subject)
+		gld.Verify(t, "some output.")
+		expected := []byte(("some output."))
 		golden.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_write_subject_as_snapshot_content.snap", expected)
 	})
 
 	t.Run("should not alter snapshot when it exists", func(t *testing.T) {
 		setUp(t)
 
-		subject := "some output."
-		golden.Verify(&gt, subject)
-		modified := "different output."
-		golden.Verify(&gt, modified)
+		gld.Verify(&tSpy, "some output.")
+		gld.Verify(&tSpy, "different output.")
 
-		want := []byte(subject)
+		want := []byte(("some output."))
 
 		golden.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_not_alter_snapshot_when_it_exists.snap", want)
 	})
@@ -62,11 +57,11 @@ func TestVerify(t *testing.T) {
 		setUp(t)
 
 		// Sets the snapshot
-		golden.Verify(&gt, "original output.")
+		gld.Verify(&tSpy, "original output.")
 		// Changes happened. Verify against existing snapshot
-		golden.Verify(&gt, "different output.")
+		gld.Verify(&tSpy, "different output.")
 
-		golden.AssertFailedTest(t, &gt)
-		golden.AssertReportContains(t, &gt, "-original output.\n+different output.\n")
+		golden.AssertFailedTest(t, &tSpy)
+		golden.AssertReportContains(t, &tSpy, "-original output.\n+different output.\n")
 	})
 }

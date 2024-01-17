@@ -7,22 +7,22 @@ import (
 
 func TestVerify(t *testing.T) {
 
-	// Don't use real file system in tests
-	fs := golden.NewMemFs()
-	golden.G = golden.NewUsingFs(fs)
-
 	// Replace testing.T with a double to be able to spy results
 	gt := golden.TSpy{
 		T: t,
 	}
 
 	t.Run("should create snapshot if not exists", func(t *testing.T) {
+		fs := golden.NewMemFs()
+		golden.G = golden.NewUsingFs(fs)
 		subject := "some subject."
 		golden.Verify(t, subject)
 		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_create_snapshot_if_not_exists.snap")
 	})
 
 	t.Run("should write subject as snapshot content", func(t *testing.T) {
+		fs := golden.NewMemFs()
+		golden.G = golden.NewUsingFs(fs)
 		subject := "some output."
 		golden.Verify(t, subject)
 		expected := []byte(subject)
@@ -30,6 +30,8 @@ func TestVerify(t *testing.T) {
 	})
 
 	t.Run("should not alter snapshot when it exists", func(t *testing.T) {
+		fs := golden.NewMemFs()
+		golden.G = golden.NewUsingFs(fs)
 		subject := "some output."
 		golden.Verify(&gt, subject)
 		modified := "different output."
@@ -40,10 +42,22 @@ func TestVerify(t *testing.T) {
 	})
 
 	t.Run("should detect difference", func(t *testing.T) {
+		fs := golden.NewMemFs()
+		golden.G = golden.NewUsingFs(fs)
 		subject := "original output."
 		golden.Verify(&gt, subject)
 		modified := "different output."
 		golden.Verify(&gt, modified)
 		golden.AssertFailedTest(t, &gt)
+	})
+
+	t.Run("should report differences", func(t *testing.T) {
+		fs := golden.NewMemFs()
+		golden.G = golden.NewUsingFs(fs)
+		subject := "original output."
+		golden.Verify(&gt, subject)
+		modified := "different output."
+		golden.Verify(&gt, modified)
+		golden.AssertReportContains(t, &gt, "-original output.\n+different output.\n")
 	})
 }

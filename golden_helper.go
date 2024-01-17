@@ -13,10 +13,12 @@ snapshot are found
 type TSpy struct {
 	*testing.T
 	failed bool
+	report string
 }
 
-func (t *TSpy) Errorf(_ string, _ ...any) {
+func (t *TSpy) Errorf(_ string, report ...any) {
 	t.failed = true
+	t.report = report[0].(string)
 }
 
 /*
@@ -24,4 +26,8 @@ AssertFailedTest allows us to spy on TSpy
 */
 func AssertFailedTest(t *testing.T, gt *TSpy) {
 	assert.True(t, gt.failed)
+}
+
+func AssertReportContains(t *testing.T, g *TSpy, s string) {
+	assert.Contains(t, g.report, s)
 }

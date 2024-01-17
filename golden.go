@@ -10,6 +10,7 @@ type Golden struct {
 	sync.RWMutex
 	fs         Vfs
 	normalizer Normalizer
+	reporter   DiffReporter
 	folder     string
 	ext        string
 	name       string
@@ -33,7 +34,7 @@ func (g *Golden) Verify(t Failable, s any) {
 	snapshot := g.readSnapshot(name)
 
 	if string(snapshot) != subject {
-		t.Errorf("There are differences")
+		t.Errorf("%s", g.reporter.Differences(string(snapshot), subject))
 	}
 
 	g.Unlock()
@@ -97,6 +98,7 @@ func New() *Golden {
 		folder:     "__snapshots",
 		ext:        ".snap",
 		normalizer: JsonNormalizer{},
+		reporter:   LineDiffReporter{},
 	}
 }
 
@@ -110,6 +112,7 @@ func NewUsingFs(fs Vfs) *Golden {
 		ext:        ".snap",
 		fs:         fs,
 		normalizer: JsonNormalizer{},
+		reporter:   LineDiffReporter{},
 	}
 }
 
@@ -124,4 +127,7 @@ type Failable interface {
 
 type Normalizer interface {
 	Normalize(subject any) (string, error)
+}
+type DiffReporter interface {
+	Differences(want, got string) string
 }

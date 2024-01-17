@@ -1,6 +1,6 @@
 # Golden
 
-A golang library for snapshot 📸 testing.
+A Go library for snapshot 📸 testing.
 
 ## TL;DR
 

@@ -1,4 +1,4 @@
-module golden
+module github.com/franiglesias/golden
 
 go 1.19
 

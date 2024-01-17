@@ -25,7 +25,7 @@ func TestJsonNormalizer(t *testing.T) {
 			want:    "This is a string",
 		},
 		{
-			name:    "should normalizar number to string",
+			name:    "should normalize number to string",
 			subject: 123.45,
 			want:    "123.45",
 		},

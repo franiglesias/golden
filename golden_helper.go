@@ -28,6 +28,10 @@ func AssertFailedTest(t *testing.T, gt *TSpy) {
 	assert.True(t, gt.failed)
 }
 
+func AssertPassTest(t *testing.T, gt *TSpy) {
+	assert.False(t, gt.failed)
+}
+
 func AssertReportContains(t *testing.T, g *TSpy, s string) {
 	assert.Contains(t, g.report, s)
 }

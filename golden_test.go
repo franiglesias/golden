@@ -2,6 +2,7 @@ package golden_test
 
 import (
 	"github.com/franiglesias/golden"
+	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
@@ -63,5 +64,38 @@ func TestVerify(t *testing.T) {
 
 		golden.AssertFailedTest(t, &tSpy)
 		golden.AssertReportContains(t, &tSpy, "-original output.\n+different output.\n")
+	})
+
+	t.Run("should use custom name for snapshot", func(t *testing.T) {
+		setUp(t)
+
+		gld.UseSnapshot("custom_snapshot").Verify(&tSpy, "original output")
+
+		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/custom_snapshot.snap")
+	})
+
+	t.Run("should use default name after spend customized", func(t *testing.T) {
+		setUp(t)
+
+		gld.UseSnapshot("custom_snapshot").Verify(&tSpy, "original output")
+		gld.Verify(&tSpy, "original output")
+
+		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_use_default_name_after_spend_customized.snap")
+	})
+
+	t.Run("should allow external file via custom name", func(t *testing.T) {
+		setUp(t)
+
+		// Creates a file in the path, simulating that we put our own
+		err := fs.WriteFile("__snapshots/external_snapshot.snap", []byte("external output"))
+		assert.NoError(t, err)
+
+		gld.UseSnapshot("external_snapshot").Verify(&tSpy, "generated output")
+
+		// By default, golden would create a snapshot. But given that we have a file in
+		// the expected path, Golden will use it as criteria, so test should fail given
+		// that subject and snapshot doesn't match
+
+		golden.AssertFailedTest(t, &tSpy)
 	})
 }

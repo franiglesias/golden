@@ -16,23 +16,26 @@ type Golden struct {
 	name       string
 }
 
+/*
+Verify takes the subject and tries to compare with the content of the snapshot
+file. If this file doesn't exist, it creates it.
+
+If the contents of the snapshot and the subject are different, the test fails
+and a report of the differences are showed.
+*/
 func (g *Golden) Verify(t Failable, s any) {
 	g.Lock()
 	t.Helper()
 
-	g.name = t.Name()
-	name := g.snapshotPath()
-
+	name := g.snapshotPath(t)
 	subject := g.normalize(s)
 
 	snapshotExists := g.snapshotExists(name)
-
 	if !snapshotExists {
 		g.writeSnapshot(name, subject)
 	}
 
 	snapshot := g.readSnapshot(name)
-
 	if snapshot != subject {
 		t.Errorf("%s", g.reportDiff(snapshot, subject))
 	}
@@ -75,8 +78,29 @@ func (g *Golden) readSnapshot(name string) string {
 	return string(snapshot)
 }
 
-func (g *Golden) snapshotPath() string {
-	return path.Join(g.folder, g.name+g.ext)
+func (g *Golden) snapshotPath(t Failable) string {
+	if g.name == "" {
+		g.name = t.Name()
+	}
+
+	snapshotName := path.Join(g.folder, g.name+g.ext)
+
+	// resets g.name after using it
+	g.name = ""
+
+	return snapshotName
+}
+
+/*
+UseSnapshot allows you custom the name of the snapshot. This can be useful when
+you want several snapshot in the same test. Also, it allows you to bring
+external files to use as snapshot.
+
+If you don't indicate any name, the snapshot will be named after the test.
+*/
+func (g *Golden) UseSnapshot(name string) *Golden {
+	g.name = name
+	return g
 }
 
 /*
@@ -85,10 +109,27 @@ Global vars and functions
 
 */
 
+/*
+G is a singleton instance of the Golden object. Usually you will not need to instantiate it.
+*/
 var G = New()
 
+/*
+Verify see Golden.Verify
+
+This is a tiny wrapper around the Golden.Verify method.
+*/
 func Verify(t Failable, subject any) {
 	G.Verify(t, subject)
+}
+
+/*
+UseSnapshot see Golden.UseSnapshot
+
+This is a tiny wrapper around the Golden.UseSnapshot method
+*/
+func UseSnapshot(name string) *Golden {
+	return G.UseSnapshot(name)
 }
 
 /*

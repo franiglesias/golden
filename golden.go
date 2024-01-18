@@ -101,6 +101,7 @@ func New() *Golden {
 	return &Golden{
 		folder:     "__snapshots",
 		ext:        ".snap",
+		fs:         NewOsFs(),
 		normalizer: JsonNormalizer{},
 		reporter:   LineDiffReporter{},
 	}

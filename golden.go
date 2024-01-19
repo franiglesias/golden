@@ -30,6 +30,10 @@ func (c config) snapshotPath(t Failable) string {
 	return path.Join(c.folder, c.name+c.ext)
 }
 
+func (c config) toApprove() bool {
+	return false
+}
+
 /*
 Verify takes the subject and tries to compare with the content of the snapshot
 file. If this file doesn't exist, it creates it.
@@ -53,13 +57,13 @@ func (g *Golden) Verify(t Failable, s any) {
 
 	name := conf.snapshotPath(t)
 
-	// ToApprove mode is like when snapshot doesn't exist, so we have to write always
+	// toApprove mode is like when snapshot doesn't exist, so we have to write it always
 
 	snapshotExists := g.snapshotExists(name)
-	if !snapshotExists {
+	if !snapshotExists || conf.toApprove() {
 		g.writeSnapshot(name, subject)
 	}
-	// We should reset the mode, so other test work as expected and you have to explicitly mark as ToApprove
+	// We should reset the mode, so other test work as expected and you have to explicitly mark as toApprove
 	// But not here if we want to do something during reporting
 
 	snapshot := g.readSnapshot(name)

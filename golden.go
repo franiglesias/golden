@@ -27,20 +27,35 @@ func (g *Golden) Verify(t Failable, s any) {
 	g.Lock()
 	t.Helper()
 
+	// We should separate global configuration and test configuration
+	// This way we could start fresh on every run and reset after
+	// Also, this could be helpful to have separated global and per test config
+
+	// Global (defaults): path, reporter, ext, normalizer
+	// Per test: same as Global, approve mode, name
+
 	name := g.snapshotPath(t)
 	subject := g.normalize(s)
 
-	snapshotExists := g.snapshotExists(name)
-	if !snapshotExists {
-		g.writeSnapshot(name, subject)
-	}
+	g.manageSnapshot(name, subject)
 
 	snapshot := g.readSnapshot(name)
 	if snapshot != subject {
+		// If Approval add some reminder in the header
 		t.Errorf("%s", g.reportDiff(snapshot, subject))
 	}
 
 	g.Unlock()
+}
+
+func (g *Golden) manageSnapshot(name string, subject string) {
+	// ToApprove mode is like when snapshot doesn't exist so we have to write always
+	snapshotExists := g.snapshotExists(name)
+	if !snapshotExists {
+		g.writeSnapshot(name, subject)
+	}
+	// We should reset the mode, so other test work as expected and you have to explicitly mark as ToApprove
+	// But not here if we want to do something during reporting
 }
 
 func (g *Golden) reportDiff(snapshot string, subject string) string {

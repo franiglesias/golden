@@ -25,13 +25,13 @@ func (t *TSpy) Errorf(_ string, report ...any) {
 AssertFailedTest allows us to spy on TSpy
 */
 func AssertFailedTest(t *testing.T, gt *TSpy) {
-	assert.True(t, gt.failed)
+	assert.True(t, gt.failed, "Test passed and it shouldn't")
 }
 
 func AssertPassTest(t *testing.T, gt *TSpy) {
-	assert.False(t, gt.failed)
+	assert.False(t, gt.failed, "Test failed and it shouldn't")
 }
 
 func AssertReportContains(t *testing.T, g *TSpy, s string) {
-	assert.Contains(t, g.report, s)
+	assert.Containsf(t, g.report, s, "Diff report doesn't contains expected '%s'", s)
 }

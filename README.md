@@ -12,13 +12,13 @@ This is useful to:
 * obtain high code coverage when starting to refactor legacy
 * test complex outputs (objects, files, etc)
 
-> Current Status: maybe you could try, but only snapshot name customization is provided and there is no functionality beyond basic snapshotting.
+> Current Status: verify and approval mode. Test name customization. 
 
 ### Installation
 
 No, seriously. It's not ready ✋.
 
-But you could experiment with the basic snapshot facility. 
+But you could experiment with the basic snapshot verification facility and approval. 
 
 At this point there are no utilities for customizing any aspect of golden functionality.
 
@@ -101,7 +101,7 @@ In fact, snapshot testing is perfect for testing complex objects or outputs, suc
 
 But this way of testing is weird for developing new features... How can I know that my generated output is correct so far?
 
-### Approval testing
+## Approval testing
 
 Approval testing is a variation of snapshot testing. Usually, in snapshot testing, the first time you execute the test, a new snapshot is created and the test automatically passes. Then, you make changes to the code and use the snapshot to ensure there are not behavioral changes. By the way, this is the default behavior of `Golden`.
 
@@ -111,9 +111,35 @@ In fact, you could make changes and re-run the test until you are satisfied with
 
 I think that Approval Testing was first introduced by [Llewellyn Falco](https://twitter.com/llewellynfalco). You can [learn more about this technique in their website](https://approvaltests.com/), where you can find how to approach development with it.
 
-Approval testing is a planned feature for Golden.
+### How to do approval testing with Golden
 
-### Golden master
+Imagine you are writing some code that generates a complex Json object or another long and complex document. You need this object to be reviewed by a domain expert to ensure that it contains what the code is supposed to generate.
+
+If you work in "verification mode" you will have to delete every snapshot that is created when running the test. Instead of that, you can use the "approval mode". It is very easy: you simply have to use the "ToApprove" function until the snapshot reflects exactly what you or the domain expert want.
+
+```go
+func TestSomething(t *testing.T) {
+    output := SomeFunction("param1", "param2")
+
+    golden.ToApprove(t, output)
+}
+```
+
+This way, the test will always fail, and it will update the snapshot with the changes that happen in the output. This is because in "approval mode" you don't want to allow the test pass.
+
+So, how I can mark that a snapshot was approved? Easy: simple change the test to use the verification mode once you confirmed that the last snapshot was approved:
+
+```go
+func TestSomething(t *testing.T) {
+    output := SomeFunction("param1", "param2")
+
+    golden.Verify(t, output)
+}
+```
+
+Other libraries requires you to use some sort external tool to rename or mark a snapshot as approved. Golden puts this distinction into the test itself. The fact that it fails, allows you to remember that you will need to make something with the test. 
+
+## Golden master
 
 There is another variation of snapshot testing. **Golden Master** is a technique introduced by Michael Feathers for working with legacy code that you don't understand. With this technique you could achieve 100% coverage really fast, so you can be sure that refactoring will be safe because you always will know if behaviour of the code is broken due to a change you introduced. And the best thing is that you don't need to really understand the code. Once you start refactoring thins, it will be easier to introduce classic assertion testing and probably remove the Golden Master tests.
 

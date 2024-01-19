@@ -16,6 +16,20 @@ type Golden struct {
 	name       string
 }
 
+type config struct {
+	folder string
+	name   string
+	ext    string
+}
+
+func (c config) snapshotPath(t Failable) string {
+	if c.name == "" {
+		c.name = t.Name()
+	}
+
+	return path.Join(c.folder, c.name+c.ext)
+}
+
 /*
 Verify takes the subject and tries to compare with the content of the snapshot
 file. If this file doesn't exist, it creates it.
@@ -34,10 +48,19 @@ func (g *Golden) Verify(t Failable, s any) {
 	// Global (defaults): path, reporter, ext, normalizer
 	// Per test: same as Global, approve mode, name
 
-	name := g.snapshotPath(t)
 	subject := g.normalize(s)
+	conf := g.testConf()
 
-	g.manageSnapshot(name, subject)
+	name := conf.snapshotPath(t)
+
+	// ToApprove mode is like when snapshot doesn't exist, so we have to write always
+
+	snapshotExists := g.snapshotExists(name)
+	if !snapshotExists {
+		g.writeSnapshot(name, subject)
+	}
+	// We should reset the mode, so other test work as expected and you have to explicitly mark as ToApprove
+	// But not here if we want to do something during reporting
 
 	snapshot := g.readSnapshot(name)
 	if snapshot != subject {
@@ -46,16 +69,6 @@ func (g *Golden) Verify(t Failable, s any) {
 	}
 
 	g.Unlock()
-}
-
-func (g *Golden) manageSnapshot(name string, subject string) {
-	// ToApprove mode is like when snapshot doesn't exist so we have to write always
-	snapshotExists := g.snapshotExists(name)
-	if !snapshotExists {
-		g.writeSnapshot(name, subject)
-	}
-	// We should reset the mode, so other test work as expected and you have to explicitly mark as ToApprove
-	// But not here if we want to do something during reporting
 }
 
 func (g *Golden) reportDiff(snapshot string, subject string) string {
@@ -116,6 +129,16 @@ If you don't indicate any name, the snapshot will be named after the test.
 func (g *Golden) UseSnapshot(name string) *Golden {
 	g.name = name
 	return g
+}
+
+func (g *Golden) testConf() config {
+	c := config{
+		folder: g.folder,
+		name:   g.name,
+		ext:    g.ext,
+	}
+	g.name = ""
+	return c
 }
 
 /*

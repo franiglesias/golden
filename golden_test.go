@@ -99,3 +99,34 @@ func TestVerify(t *testing.T) {
 		golden.AssertFailedTest(t, &tSpy)
 	})
 }
+
+func TestToApprove(t *testing.T) {
+	var fs *golden.MemFs
+	var gld golden.Golden
+	var tSpy golden.TSpy
+
+	setUp := func(t *testing.T) {
+		// Passing t in each setup guarantees that we are using the right name for the snapshot
+
+		// Inits a new instance of Golden
+		// Avoid using real filesystem in test
+		// Inits the fs, so it's empty on each test
+
+		fs = golden.NewMemFs()
+		gld = *golden.NewUsingFs(fs)
+
+		// Replace testing.T with this double to allow spying results
+
+		tSpy = golden.TSpy{
+			T: t,
+		}
+	}
+
+	t.Run("should create snapshot and fail", func(t *testing.T) {
+		setUp(t)
+
+		gld.Verify(t, "some subject.")
+		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestToApprove/should_create_snapshot_and_fail.snap")
+		golden.AssertFailedTest(t, &tSpy)
+	})
+}

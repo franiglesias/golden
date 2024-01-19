@@ -21,6 +21,11 @@ func (t *TSpy) Errorf(_ string, report ...any) {
 	t.report = report[0].(string)
 }
 
+func (t *TSpy) Reset() {
+	t.failed = false
+	t.report = ""
+}
+
 /*
 AssertFailedTest allows us to spy on TSpy
 */

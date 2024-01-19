@@ -14,12 +14,14 @@ type Golden struct {
 	folder     string
 	ext        string
 	name       string
+	approve    bool
 }
 
 type config struct {
-	folder string
-	name   string
-	ext    string
+	folder  string
+	name    string
+	ext     string
+	approve bool
 }
 
 func (c config) snapshotPath(t Failable) string {
@@ -31,7 +33,7 @@ func (c config) snapshotPath(t Failable) string {
 }
 
 func (c config) toApprove() bool {
-	return false
+	return c.approve
 }
 
 /*
@@ -67,12 +69,20 @@ func (g *Golden) Verify(t Failable, s any) {
 	// But not here if we want to do something during reporting
 
 	snapshot := g.readSnapshot(name)
-	if snapshot != subject {
+	if snapshot != subject || conf.toApprove() {
 		// If Approval add some reminder in the header
 		t.Errorf("%s", g.reportDiff(snapshot, subject))
 	}
 
 	g.Unlock()
+}
+
+func (g *Golden) ToApprove(t Failable, subject any) {
+	g.Lock()
+	g.approve = true
+	g.Unlock()
+
+	g.Verify(t, subject)
 }
 
 func (g *Golden) reportDiff(snapshot string, subject string) string {
@@ -137,11 +147,13 @@ func (g *Golden) UseSnapshot(name string) *Golden {
 
 func (g *Golden) testConf() config {
 	c := config{
-		folder: g.folder,
-		name:   g.name,
-		ext:    g.ext,
+		folder:  g.folder,
+		name:    g.name,
+		ext:     g.ext,
+		approve: g.approve,
 	}
 	g.name = ""
+	g.approve = false
 	return c
 }
 

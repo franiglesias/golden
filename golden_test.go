@@ -2,6 +2,7 @@ package golden_test
 
 import (
 	"github.com/franiglesias/golden"
+	"github.com/franiglesias/golden/internal/helper"
 	"github.com/franiglesias/golden/internal/vfs"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -10,7 +11,7 @@ import (
 func TestVerify(t *testing.T) {
 	var fs *vfs.MemFs
 	var gld golden.Golden
-	var tSpy golden.TSpy
+	var tSpy helper.TSpy
 
 	setUp := func(t *testing.T) {
 		// Passing t in each setup guarantees that we are using the right name for the snapshot
@@ -24,7 +25,7 @@ func TestVerify(t *testing.T) {
 
 		// Replace testing.T with this double to allow spying results
 
-		tSpy = golden.TSpy{
+		tSpy = helper.TSpy{
 			T: t,
 		}
 	}
@@ -63,8 +64,8 @@ func TestVerify(t *testing.T) {
 		// Changes happened. Verify against existing snapshot
 		gld.Verify(&tSpy, "different output.")
 
-		golden.AssertFailedTest(t, &tSpy)
-		golden.AssertReportContains(t, &tSpy, "-original output.\n+different output.\n")
+		helper.AssertFailedTest(t, &tSpy)
+		helper.AssertReportContains(t, &tSpy, "-original output.\n+different output.\n")
 	})
 
 	t.Run("should use custom name for snapshot", func(t *testing.T) {
@@ -97,19 +98,19 @@ func TestVerify(t *testing.T) {
 		// the expected path, Golden will use it as criteria, so test should fail given
 		// that subject and snapshot doesn't match
 
-		golden.AssertFailedTest(t, &tSpy)
+		helper.AssertFailedTest(t, &tSpy)
 	})
 }
 
 func TestToApprove(t *testing.T) {
 	var fs *vfs.MemFs
 	var gld golden.Golden
-	var tSpy golden.TSpy
+	var tSpy helper.TSpy
 
 	setUp := func(t *testing.T) {
 		fs = vfs.NewMemFs()
 		gld = *golden.NewUsingFs(fs)
-		tSpy = golden.TSpy{
+		tSpy = helper.TSpy{
 			T: t,
 		}
 	}
@@ -119,7 +120,7 @@ func TestToApprove(t *testing.T) {
 
 		gld.ToApprove(&tSpy, "some subject.")
 		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestToApprove/should_create_snapshot_and_fail.snap")
-		golden.AssertFailedTest(t, &tSpy)
+		helper.AssertFailedTest(t, &tSpy)
 	})
 
 	/*
@@ -131,12 +132,12 @@ func TestToApprove(t *testing.T) {
 		setUp(t)
 
 		gld.ToApprove(&tSpy, "starting subject.")
-		golden.AssertFailedTest(t, &tSpy)
+		helper.AssertFailedTest(t, &tSpy)
 		vfs.AssertContentWasStored(t, fs, "__snapshots/TestToApprove/should_update_snapshot_and_fail_in_second_run.snap", []byte("starting subject."))
 		tSpy.Reset()
 
 		gld.ToApprove(&tSpy, "updated subject.")
-		golden.AssertFailedTest(t, &tSpy)
+		helper.AssertFailedTest(t, &tSpy)
 		vfs.AssertContentWasStored(t, fs, "__snapshots/TestToApprove/should_update_snapshot_and_fail_in_second_run.snap", []byte("updated subject."))
 		tSpy.Reset()
 	})
@@ -158,6 +159,6 @@ func TestToApprove(t *testing.T) {
 
 		// Last snapshot was approved, so we can change the test to Verification
 		gld.Verify(&tSpy, "updated subject.")
-		golden.AssertPassTest(t, &tSpy)
+		helper.AssertPassTest(t, &tSpy)
 	})
 }

@@ -1,4 +1,4 @@
-package golden
+package helper
 
 import (
 	"github.com/stretchr/testify/assert"

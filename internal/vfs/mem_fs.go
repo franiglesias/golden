@@ -1,7 +1,6 @@
 package vfs
 
 import (
-	"github.com/franiglesias/golden"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -34,7 +33,7 @@ func (fs *MemFs) ReadFile(name string) ([]byte, error) {
 	if ok {
 		return content, nil
 	}
-	return []byte{}, golden.SnapshotNotFound
+	return []byte{}, SnapshotNotFound
 }
 
 func AssertContentWasStored(t *testing.T, fs *MemFs, path string, expected []byte) {

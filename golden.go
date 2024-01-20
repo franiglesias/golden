@@ -1,6 +1,7 @@
 package golden
 
 import (
+	"github.com/franiglesias/golden/internal/vfs"
 	"log"
 	"path"
 	"sync"
@@ -8,7 +9,7 @@ import (
 
 type Golden struct {
 	sync.RWMutex
-	fs         Vfs
+	fs         vfs.Vfs
 	normalizer Normalizer
 	reporter   DiffReporter
 	folder     string
@@ -196,7 +197,7 @@ func New() *Golden {
 	return &Golden{
 		folder:     "__snapshots",
 		ext:        ".snap",
-		fs:         NewOsFs(),
+		fs:         vfs.NewOsFs(),
 		normalizer: JsonNormalizer{},
 		reporter:   LineDiffReporter{},
 	}
@@ -206,7 +207,7 @@ func New() *Golden {
 NewUsingFs initializes a new Golden object allowing us to change some defaults
 from the beginning. Usually for testing purposes only
 */
-func NewUsingFs(fs Vfs) *Golden {
+func NewUsingFs(fs vfs.Vfs) *Golden {
 	return &Golden{
 		folder:     "__snapshots",
 		ext:        ".snap",

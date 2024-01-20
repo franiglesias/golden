@@ -1,15 +1,14 @@
-package golden_test
+package vfs
 
 import (
 	"errors"
-	"github.com/franiglesias/golden"
 	"github.com/stretchr/testify/assert"
 	"os"
 	"testing"
 )
 
 func TestOsFs(t *testing.T) {
-	osFs := golden.NewOsFs()
+	osFs := NewOsFs()
 
 	t.Run("should write file", func(t *testing.T) {
 		filePath := "file.snap"
@@ -71,7 +70,7 @@ func TestOsFs(t *testing.T) {
 		_, err := osFs.ReadFile(filePath)
 		assert.Error(t, err)
 
-		assert.True(t, errors.Is(err, golden.SnapshotNotFound))
+		assert.True(t, errors.Is(err, SnapshotNotFound))
 	})
 
 	t.Run("should know if file exists", func(t *testing.T) {

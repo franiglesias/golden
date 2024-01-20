@@ -2,7 +2,6 @@ package vfs
 
 import (
 	"errors"
-	"github.com/franiglesias/golden"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -63,7 +62,7 @@ func TestMemFs(t *testing.T) {
 		_, err := memFs.ReadFile(filePath)
 		assert.Error(t, err)
 
-		assert.True(t, errors.Is(err, golden.SnapshotNotFound))
+		assert.True(t, errors.Is(err, SnapshotNotFound))
 	})
 
 	t.Run("should know if file exists", func(t *testing.T) {

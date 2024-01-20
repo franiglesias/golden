@@ -1,4 +1,4 @@
-package golden_test
+package vfs
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 )
 
 func TestMemFs(t *testing.T) {
-	memFs := golden.NewMemFs()
+	memFs := NewMemFs()
 
 	// Use memFs to write a file in the path ensuring all things work
 	writeFile := func(t *testing.T, path string, content []byte) {
@@ -22,7 +22,7 @@ func TestMemFs(t *testing.T) {
 		content := []byte("some content")
 		writeFile(t, filePath, content)
 
-		golden.AssertContentWasStored(t, memFs, filePath, content)
+		AssertContentWasStored(t, memFs, filePath, content)
 	})
 
 	t.Run("should override existing file", func(t *testing.T) {
@@ -34,7 +34,7 @@ func TestMemFs(t *testing.T) {
 		lastContent := []byte("new content")
 		writeFile(t, filePath, lastContent)
 
-		golden.AssertContentWasStored(t, memFs, filePath, lastContent)
+		AssertContentWasStored(t, memFs, filePath, lastContent)
 	})
 
 	t.Run("should allow full paths", func(t *testing.T) {
@@ -43,7 +43,7 @@ func TestMemFs(t *testing.T) {
 		content := []byte("some content")
 		writeFile(t, filePath, content)
 
-		golden.AssertContentWasStored(t, memFs, filePath, content)
+		AssertContentWasStored(t, memFs, filePath, content)
 	})
 
 	t.Run("should read existing files", func(t *testing.T) {

@@ -2,12 +2,13 @@ package golden_test
 
 import (
 	"github.com/franiglesias/golden"
+	"github.com/franiglesias/golden/internal/vfs"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
 
 func TestVerify(t *testing.T) {
-	var fs *golden.MemFs
+	var fs *vfs.MemFs
 	var gld golden.Golden
 	var tSpy golden.TSpy
 
@@ -18,7 +19,7 @@ func TestVerify(t *testing.T) {
 		// Avoid using real filesystem in test
 		// Inits the fs, so it's empty on each test
 
-		fs = golden.NewMemFs()
+		fs = vfs.NewMemFs()
 		gld = *golden.NewUsingFs(fs)
 
 		// Replace testing.T with this double to allow spying results
@@ -32,7 +33,7 @@ func TestVerify(t *testing.T) {
 		setUp(t)
 
 		gld.Verify(t, "some subject.")
-		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_create_snapshot_if_not_exists.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_create_snapshot_if_not_exists.snap")
 	})
 
 	t.Run("should write subject as snapshot content", func(t *testing.T) {
@@ -40,7 +41,7 @@ func TestVerify(t *testing.T) {
 
 		gld.Verify(t, "some output.")
 		expected := []byte(("some output."))
-		golden.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_write_subject_as_snapshot_content.snap", expected)
+		vfs.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_write_subject_as_snapshot_content.snap", expected)
 	})
 
 	t.Run("should not alter snapshot when it exists", func(t *testing.T) {
@@ -51,7 +52,7 @@ func TestVerify(t *testing.T) {
 
 		want := []byte(("some output."))
 
-		golden.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_not_alter_snapshot_when_it_exists.snap", want)
+		vfs.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_not_alter_snapshot_when_it_exists.snap", want)
 	})
 
 	t.Run("should detect and report differences by line", func(t *testing.T) {
@@ -71,7 +72,7 @@ func TestVerify(t *testing.T) {
 
 		gld.UseSnapshot("custom_snapshot").Verify(&tSpy, "original output")
 
-		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/custom_snapshot.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/custom_snapshot.snap")
 	})
 
 	t.Run("should use default name after spend customized", func(t *testing.T) {
@@ -80,7 +81,7 @@ func TestVerify(t *testing.T) {
 		gld.UseSnapshot("custom_snapshot").Verify(&tSpy, "original output")
 		gld.Verify(&tSpy, "original output")
 
-		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_use_default_name_after_spend_customized.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_use_default_name_after_spend_customized.snap")
 	})
 
 	t.Run("should allow external file via custom name", func(t *testing.T) {
@@ -101,12 +102,12 @@ func TestVerify(t *testing.T) {
 }
 
 func TestToApprove(t *testing.T) {
-	var fs *golden.MemFs
+	var fs *vfs.MemFs
 	var gld golden.Golden
 	var tSpy golden.TSpy
 
 	setUp := func(t *testing.T) {
-		fs = golden.NewMemFs()
+		fs = vfs.NewMemFs()
 		gld = *golden.NewUsingFs(fs)
 		tSpy = golden.TSpy{
 			T: t,
@@ -117,7 +118,7 @@ func TestToApprove(t *testing.T) {
 		setUp(t)
 
 		gld.ToApprove(&tSpy, "some subject.")
-		golden.AssertSnapshotWasCreated(t, fs, "__snapshots/TestToApprove/should_create_snapshot_and_fail.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestToApprove/should_create_snapshot_and_fail.snap")
 		golden.AssertFailedTest(t, &tSpy)
 	})
 
@@ -131,12 +132,12 @@ func TestToApprove(t *testing.T) {
 
 		gld.ToApprove(&tSpy, "starting subject.")
 		golden.AssertFailedTest(t, &tSpy)
-		golden.AssertContentWasStored(t, fs, "__snapshots/TestToApprove/should_update_snapshot_and_fail_in_second_run.snap", []byte("starting subject."))
+		vfs.AssertContentWasStored(t, fs, "__snapshots/TestToApprove/should_update_snapshot_and_fail_in_second_run.snap", []byte("starting subject."))
 		tSpy.Reset()
 
 		gld.ToApprove(&tSpy, "updated subject.")
 		golden.AssertFailedTest(t, &tSpy)
-		golden.AssertContentWasStored(t, fs, "__snapshots/TestToApprove/should_update_snapshot_and_fail_in_second_run.snap", []byte("updated subject."))
+		vfs.AssertContentWasStored(t, fs, "__snapshots/TestToApprove/should_update_snapshot_and_fail_in_second_run.snap", []byte("updated subject."))
 		tSpy.Reset()
 	})
 

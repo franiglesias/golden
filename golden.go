@@ -73,7 +73,11 @@ func (g *Golden) Verify(t Failable, s any) {
 	snapshot := g.readSnapshot(name)
 	if snapshot != subject || conf.toApprove() {
 		// If Approval add some reminder in the header
-		t.Errorf("%s", g.reportDiff(snapshot, subject))
+		header := "**Verify mode**\n%s"
+		if conf.toApprove() {
+			header = "**Approval mode**: Replace 'ToApprove' with 'Verify' when you are happy with this snapshot.\n%s"
+		}
+		t.Errorf(header, g.reportDiff(snapshot, subject))
 	}
 
 	g.Unlock()

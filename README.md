@@ -12,15 +12,13 @@ This is useful to:
 * obtain high code coverage when starting to refactor legacy
 * test complex outputs (objects, files, etc)
 
-> Current Status: verify and approval mode. Test name customization. 
+> Current Status: verify, approval and golden master mode. Test name customization. 
+
+Mostly ready for use, but use it at your own risk until it becomes stable. Not all planned features are ready yet.
 
 ### Installation
 
-No, seriously. It's not ready ✋.
-
-But you could experiment with the basic snapshot verification facility and approval. 
-
-At this point there are no utilities for customizing any aspect of golden functionality.
+Standard Go module installation.
 
 ```shell
 go get -u github.com/franiglesias/golden
@@ -115,7 +113,7 @@ I think that Approval Testing was first introduced by [Llewellyn Falco](https://
 
 ### How to do approval testing with Golden
 
-Imagine you are writing some code that generates a complex Json object or another long and complex document. You need this object to be reviewed by a domain expert to ensure that it contains what the code is supposed to generate.
+Imagine you are writing some code that generates a complex [Json]() object or another long and complex document. You need this object to be reviewed by a domain expert to ensure that it contains what the code is supposed to generate.
 
 If you work in "verification mode" you will have to delete every snapshot that is created when running the test. Instead of that, you can use the "approval mode". It is very easy: you simply have to use the "ToApprove" function until the snapshot reflects exactly what you or the domain expert want.
 
@@ -141,7 +139,7 @@ func TestSomething(t *testing.T) {
 
 Other libraries requires you to use some sort external tool to rename or mark a snapshot as approved. Golden puts this distinction into the test itself. The fact that it fails, allows you to remember that you will need to make something with the test. 
 
-## Golden master
+## Golden Master
 
 There is another variation of snapshot testing. **Golden Master** is a technique introduced by Michael Feathers for working with legacy code that you don't understand. With this technique you could achieve high coverage really fast, so you can be sure that refactoring will be safe because you always will know if behaviour of the code is broken due to a change you introduced. The best thing is that you don't need to really understand the code. Once you start refactoring things, it will be easier to introduce classic assertion testing and finally remove the Golden Master tests.
 
@@ -172,7 +170,7 @@ The signature has 3 parameters, two are string and one is an integer. We want to
 
 #### Wrap the subject under test
 
-Well, the first thing we need is a wrapper function that takes any number of parameters of `any` type and returns a `string`. We are going to pass this function to the GoldenMaster method. 
+Well, the first thing we need is a wrapper function that takes any number of parameters of `any` type and returns a `string`. We are going to pass this function to the `Master` method. 
 
 
 ```go
@@ -223,7 +221,7 @@ t.Run("should manage the error", func(t *testing.T) {
     dividend := []any{1.0, 2.0}
     divisor := []any{0.0, -1.0, 1.0, 2.0}
 
-    gld.GoldenMaster(t, f, dividend, divisor)
+    gld.Master(t, f, dividend, divisor)
 })
 ```
 
@@ -290,7 +288,7 @@ This example will generate 132 tests (3 * 4 * 11).
 
 #### Put it all together
 
-And this is how you run a GoldenMaster test with Golden:
+And this is how you run a Master test with Golden:
 
 ```go
 t.Run("should create a golden master snapshot", func(t *testing.T) {
@@ -305,11 +303,11 @@ t.Run("should create a golden master snapshot", func(t *testing.T) {
     parts := []any{"-", "=", "*", "#"}
     times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
 
-    golden.GoldenMaster(t, f, titles, parts, times)
+    golden.Master(t, f, titles, parts, times)
 })
 ```
 
-`GoldenMaster` method will invoke `Verify` under the hood, using the result of executing all the combinations to create the snapshot. This is a very special snapshot, by the way. First of all, it is a Json file containing an array of Json objects, each of them representing one example. Like this:
+`Master` method will invoke `Verify` under the hood, using the result of executing all the combinations to create the snapshot. This is a very special snapshot, by the way. First of all, it is a JSON file containing an array of JSON objects, each of them representing one example. Like this:
 
 
 ```json
@@ -337,7 +335,7 @@ I think this will help you to understand the snapshot, identify easily some case
 
 #### Bonus points
 
-Some of the settings that you apply for standard snapshot tests can be used for GoldenMaster. For example `UseSnapshot` to customize the name.
+Some of the settings that you apply for standard snapshot tests can be used for Master. For example `UseSnapshot` to customize the name.
 
 ## Problems with snapshot testing
 

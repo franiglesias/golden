@@ -153,7 +153,191 @@ Once you complete the collection of possible values for each parameter, you will
 
 As you have probably guessed, Golden takes its name from this technique... and because it starts with "Go". Anyway, I've just found that there are lots of packages with te very same name.
 
-Combinatorial testing is a planned feature for Golden.
+### How to do Combinatorial testing with Golden
+
+Combinatorial test is a bit more tricky than plain snapshot. Not too much. The difficult part is how to use a simple API for the multiple possible Subjects Under Test (SUT).
+
+Let's see an example. Imagine that you have this function that creates a border around a title for console output.
+
+```go
+func Border(title string, part string, span int) string {
+	width := span*2 + len(title) + 2
+	top := strings.Repeat(part, width)
+	body := part + strings.Repeat(" ", span) + title + strings.Repeat(" ", span) + part
+	return top + "\n" + body + "\n" + top + "\n"
+}
+```
+
+The signature has 3 parameters, two are string and one is an integer. We want to test it with several values for each parameter.
+
+#### Wrap the subject under test
+
+Well, the first thing we need is a wrapper function that takes any number of parameters of `any` type and returns a `string`. We are going to pass this function to the GoldenMaster method. 
+
+
+```go
+f := func(args ...any) any {
+	...
+}
+```
+
+The body of the wrapper convert the received parameters back to the types required by the SUT. How to do this is totally up to you. This example is pretty simple, and we only need to perform a type assertion. As you can see in the example, we receive the params as a slice of `any`, so you will identify the correspondent parameter by position.
+
+Wrapper can return `any` type. But if you find problems with doing so, try to convert the output to string.
+
+```go
+f := func(args ...any) any {
+    title := args[0].(string)
+    part := args[1].(string)
+    span := args[2].(int)
+	
+    return Border(title, part, span)
+}
+```
+
+**What can I do if the SUT returns an error?** The best thing is to return the error using the `Error()` method. It should appear in the snapshot as is, so you will know what input combination generated it. Let's see an example. Ths is the function we want to test:
+
+```go
+func Division(a float64, b float64) (float64, error) {
+	if b == 0 {
+		return 0, errors.New("division by 0")
+	}
+
+	return a / b, nil
+}
+```
+
+And this is the test we've created for it:
+
+```go
+t.Run("should manage the error", func(t *testing.T) {
+    setUp(t)
+    f := func(args ...any) any {
+        result, err := Division(args[0].(float64), args[1].(float64))
+        if err != nil {
+            return err.Error()
+        }
+        return result
+    }
+
+    dividend := []any{1.0, 2.0}
+    divisor := []any{0.0, -1.0, 1.0, 2.0}
+
+    gld.GoldenMaster(t, f, dividend, divisor)
+})
+```
+
+Take a look at first records of the snapshot. The error message appears as the output of the corresponding combination.
+
+```json
+[
+  {
+    "Id": 1,
+    "Params": "1, 0",
+    "Output": "division by 0"
+  },
+  {
+    "Id": 2,
+    "Params": "2, 0",
+    "Output": "division by 0"
+  },
+  {
+    "Id": 3,
+    "Params": "1, -1",
+    "Output": -1
+  },
+  {
+    "Id": 4,
+    "Params": "2, -1",
+    "Output": -2
+  },
+  {
+    "Id": 5,
+    "Params": "1, 1",
+    "Output": 1
+  },
+  {
+    "Id": 6,
+    "Params": "2, 1",
+    "Output": 2
+  },
+  {
+    "Id": 7,
+    "Params": "1, 2",
+    "Output": 0.5
+  },
+  {
+    "Id": 8,
+    "Params": "2, 2",
+    "Output": 1
+  }
+]
+```
+
+#### Prepare lists of values
+
+The next thing we need to do is to prepare collections of values for each parameter. For that, you populate a slice of `any`, with all the values that you want to test. The slice is typed as `any` to allow any kind of data, but remember to use valid types for the signature of the SUT.
+
+```go
+titles := []any{"Example 1", "Example long enough", "Another thing"}
+parts := []any{"-", "=", "*", "#"}
+times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+```
+
+This example will generate 132 tests (3 * 4 * 11).
+
+**How can I choose the values?** is an interesting question. In this example it doesn't matter the specific values. In many cases, you can find interesting values in conditionals, that can change the execution flow, allowing you to obtain the most code coverage executing all possible branches. The preceden and following value of those are also interesting. If you are unsure, you can even use a batch with several random values.
+
+#### Put it all together
+
+And this is how you run a GoldenMaster test with Golden:
+
+```go
+t.Run("should create a golden master snapshot", func(t *testing.T) {
+    f := func(args ...any) any {
+        title := args[0].(string)
+        part := args[1].(string)
+        span := args[2].(int)
+        return Border(title, part, span)
+    }
+
+    titles := []any{"Example 1", "Example long enough", "Another thing"}
+    parts := []any{"-", "=", "*", "#"}
+    times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    golden.GoldenMaster(t, f, titles, parts, times)
+})
+```
+
+`GoldenMaster` method will invoke `Verify` under the hood, using the result of executing all the combinations to create the snapshot. This is a very special snapshot, by the way. First of all, it is a Json file containing an array of Json objects, each of them representing one example. Like this:
+
+
+```json
+[
+  {
+    "Id": 1,
+    "Params": "Example 1, -, 0",
+    "Output": "-----------\n-Example 1-\n-----------\n"
+  },
+  {
+    "Id": 2,
+    "Params": "Example long enough, -, 0",
+    "Output": "---------------------\n-Example long enough-\n---------------------\n"
+  },
+  {
+    "Id": 3,
+    "Params": "Another thing, -, 0",
+    "Output": "---------------\n-Another thing-\n---------------\n"
+  },
+  
+]
+```
+
+I think this will help you to understand the snapshot, identify easily some cases and even process the result if you need to.
+
+#### Bonus points
+
+Some of the settings that you apply for standard snapshot tests can be used for GoldenMaster. For example `UseSnapshot` to customize the name.
 
 ## Problems with snapshot testing
 

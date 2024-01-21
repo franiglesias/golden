@@ -1,6 +1,7 @@
 package golden
 
 import (
+	"github.com/franiglesias/golden/internal/combinatory"
 	"github.com/franiglesias/golden/internal/vfs"
 	"log"
 	"path"
@@ -78,11 +79,40 @@ func (g *Golden) Verify(t Failable, s any) {
 	g.Unlock()
 }
 
+/*
+ToApprove acts exactly as Verify except that the test never passes waiting for
+human approval. This is intentional and the purpose is to remind that you should
+review and approve the current snapshot.
+
+When you are totally ok with the snapshot, replace ToApprove with Verify in the test.
+*/
 func (g *Golden) ToApprove(t Failable, subject any) {
 	g.Lock()
 	g.approve = true
 	g.Unlock()
 
+	g.Verify(t, subject)
+}
+
+/*
+Master generates all combinations of possible values for the parameters of
+the subject under test, executes the SUT with all those combinations,
+accumulates the outputs, and creates a snapshot of that using Verify internally.
+
+You need to pass a wrapper function that executes the subject under test and
+returns a string representation of its output. This wrapper function receives any
+number of parameters of any type. It's up to you to cast or convert these
+parameters in something that can be managed by the subject under test.
+
+Also, is up to you to capture the output of the SUT as a string.
+
+The parameters received by the wrapper function are the result of combining all
+the possible values for each parameter that you would pass to the SUT. This will
+create a lot of tests (tenths or hundredths).
+*/
+func (g *Golden) Master(t Failable, f func(args ...any) any, values ...[]any) {
+	g.ext = ".snap.json"
+	subject := combinatory.Master(f, values...)
 	g.Verify(t, subject)
 }
 
@@ -155,6 +185,8 @@ func (g *Golden) testConf() config {
 	}
 	g.name = ""
 	g.approve = false
+	g.ext = ".snap"
+
 	return c
 }
 
@@ -172,10 +204,34 @@ var G = New()
 /*
 Verify see Golden.Verify
 
+TL;DR Verify the subject against a snapshot
+
 This is a tiny wrapper around the Golden.Verify method.
 */
 func Verify(t Failable, subject any) {
 	G.Verify(t, subject)
+}
+
+/*
+ToApprove see Golden.ToApprove
+
+TL;DR Updates a snapshot until someone approves it
+
+This is a tiny wrapper around the Golden.ToApprove method.
+*/
+func ToApprove(t Failable, subject any) {
+	G.Verify(t, subject)
+}
+
+/*
+Master see Golden.Master
+
+TL;DR Generates and executes SUT with all possible combinations of values
+
+This is a tiny wrapper around the Golden.Master method.
+*/
+func Master(t Failable, f func(args ...any) any, values ...[]any) {
+	G.Master(t, f, values...)
 }
 
 /*

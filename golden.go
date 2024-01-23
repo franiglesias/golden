@@ -1,5 +1,6 @@
 package golden
 
+import "C"
 import (
 	"github.com/franiglesias/golden/internal/combinatory"
 	"github.com/franiglesias/golden/internal/vfs"
@@ -13,29 +14,8 @@ type Golden struct {
 	fs         vfs.Vfs
 	normalizer Normalizer
 	reporter   DiffReporter
-	folder     string
-	ext        string
-	name       string
-	approve    bool
-}
-
-type config struct {
-	folder  string
-	name    string
-	ext     string
-	approve bool
-}
-
-func (c config) snapshotPath(t Failable) string {
-	if c.name == "" {
-		c.name = t.Name()
-	}
-
-	return path.Join(c.folder, c.name+c.ext)
-}
-
-func (c config) toApprove() bool {
-	return c.approve
+	test       Config
+	global     Config
 }
 
 /*
@@ -45,7 +25,7 @@ file. If this file doesn't exist, it creates it.
 If the contents of the snapshot and the subject are different, the test fails
 and a report of the differences are showed.
 */
-func (g *Golden) Verify(t Failable, s any) {
+func (g *Golden) Verify(t Failable, s any, options ...Config) {
 	g.Lock()
 	t.Helper()
 
@@ -56,8 +36,14 @@ func (g *Golden) Verify(t Failable, s any) {
 	// Global (defaults): path, reporter, ext, normalizer
 	// Per test: same as Global, approve mode, name
 
+	var conf Config
+	if len(options) == 0 {
+		conf = g.Defaults()
+	} else {
+		conf = g.Defaults().merge(options[0])
+	}
+
 	subject := g.normalize(s)
-	conf := g.testConf()
 
 	name := conf.snapshotPath(t)
 
@@ -92,7 +78,7 @@ When you are totally ok with the snapshot, replace ToApprove with Verify in the 
 */
 func (g *Golden) ToApprove(t Failable, subject any) {
 	g.Lock()
-	g.approve = true
+	g.test.approve = true
 	g.Unlock()
 
 	g.Verify(t, subject)
@@ -115,7 +101,7 @@ the possible values for each parameter that you would pass to the SUT. This will
 create a lot of tests (tenths or hundredths).
 */
 func (g *Golden) Master(t Failable, f func(args ...any) any, values ...[]any) {
-	g.ext = ".snap.json"
+	g.global.ext = ".snap.json"
 	subject := combinatory.Master(f, values...)
 	g.Verify(t, subject)
 }
@@ -156,14 +142,14 @@ func (g *Golden) readSnapshot(name string) string {
 }
 
 func (g *Golden) snapshotPath(t Failable) string {
-	if g.name == "" {
-		g.name = t.Name()
+	if g.test.name == "" {
+		g.test.name = t.Name()
 	}
 
-	snapshotName := path.Join(g.folder, g.name+g.ext)
+	snapshotName := path.Join(g.test.folder, g.test.name+g.test.ext)
 
 	// resets g.name after using it
-	g.name = ""
+	g.test.name = ""
 
 	return snapshotName
 }
@@ -176,21 +162,13 @@ external files to use as snapshot.
 If you don't indicate any name, the snapshot will be named after the test.
 */
 func (g *Golden) UseSnapshot(name string) *Golden {
-	g.name = name
+	g.test = g.test.UseSnapshot(name)
 	return g
 }
 
-func (g *Golden) testConf() config {
-	c := config{
-		folder:  g.folder,
-		name:    g.name,
-		ext:     g.ext,
-		approve: g.approve,
-	}
-	g.name = ""
-	g.approve = false
-	g.ext = ".snap"
-
+func (g *Golden) Defaults() Config {
+	c := g.global.merge(g.test)
+	g.test = Config{}
 	return c
 }
 
@@ -254,13 +232,7 @@ it when you want to be sure that default settings will be used or to reset G
 after using other settings.
 */
 func New() *Golden {
-	return &Golden{
-		folder:     "__snapshots",
-		ext:        ".snap",
-		fs:         vfs.NewOsFs(),
-		normalizer: JsonNormalizer{},
-		reporter:   LineDiffReporter{},
-	}
+	return NewUsingFs(vfs.NewOsFs())
 }
 
 /*
@@ -268,9 +240,15 @@ NewUsingFs initializes a new Golden object allowing us to change some defaults
 from the beginning. Usually for testing purposes only
 */
 func NewUsingFs(fs vfs.Vfs) *Golden {
+	g := Config{
+		folder:  "__snapshots",
+		name:    "",
+		ext:     ".snap",
+		approve: false,
+	}
 	return &Golden{
-		folder:     "__snapshots",
-		ext:        ".snap",
+		global:     g,
+		test:       Config{},
 		fs:         fs,
 		normalizer: JsonNormalizer{},
 		reporter:   LineDiffReporter{},

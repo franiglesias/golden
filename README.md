@@ -52,7 +52,7 @@ You can customize the snapshot name:
 func TestSomething(t *testing.T) {
 	output := SomeFunction("param1", "param2")
 	
-	golden.UseSnapshot("my_snapshot").Verify(t, output)
+	golden.Verify(t, output, Snapshot("my_snapshot"))
 }
 ```
 

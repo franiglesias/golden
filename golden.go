@@ -1,6 +1,5 @@
 package golden
 
-import "C"
 import (
 	"github.com/franiglesias/golden/internal/combinatory"
 	"github.com/franiglesias/golden/internal/vfs"
@@ -8,6 +7,18 @@ import (
 	"path"
 	"sync"
 )
+
+type Option func(g *Config) Option
+
+func Snapshot(name string) Option {
+	return func(c *Config) Option {
+		previous := c.name
+		c.name = name
+		return func(g *Config) Option {
+			return Snapshot(previous)
+		}
+	}
+}
 
 type Golden struct {
 	sync.RWMutex
@@ -25,7 +36,7 @@ file. If this file doesn't exist, it creates it.
 If the contents of the snapshot and the subject are different, the test fails
 and a report of the differences are showed.
 */
-func (g *Golden) Verify(t Failable, s any, options ...Config) {
+func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	g.Lock()
 	t.Helper()
 
@@ -36,18 +47,17 @@ func (g *Golden) Verify(t Failable, s any, options ...Config) {
 	// Global (defaults): path, reporter, ext, normalizer
 	// Per test: same as Global, approve mode, name
 
-	var conf Config
-	if len(options) == 0 {
-		conf = g.Defaults()
-	} else {
-		conf = g.Defaults().merge(options[0])
+	for _, option := range options {
+		option(&g.test)
 	}
+	var conf Config
 
+	conf = g.Defaults()
 	subject := g.normalize(s)
 
 	name := conf.snapshotPath(t)
 
-	// toApprove mode is like when snapshot doesn't exist, so we have to write it always
+	// approval mode is like snapshot doesn't exist, so we have to write it always
 
 	snapshotExists := g.snapshotExists(name)
 	if !snapshotExists || conf.toApprove() {
@@ -162,7 +172,7 @@ external files to use as snapshot.
 If you don't indicate any name, the snapshot will be named after the test.
 */
 func (g *Golden) UseSnapshot(name string) *Golden {
-	g.test = g.test.UseSnapshot(name)
+	Snapshot(name)
 	return g
 }
 

@@ -138,10 +138,10 @@ The parameters received by the wrapper function are the result of combining all
 the possible values for each parameter that you would pass to the SUT. This will
 create a lot of tests (tenths or hundredths).
 */
-func (g *Golden) Master(t Failable, f func(args ...any) any, values [][]any) {
+func (g *Golden) Master(t Failable, f func(args ...any) any, values [][]any, options ...Option) {
 	g.global.ext = ".snap.json"
 	subject := combinatory.Master(f, values...)
-	g.Verify(t, subject)
+	g.Verify(t, subject, options...)
 }
 
 func (g *Golden) reportDiff(snapshot string, subject string) string {
@@ -237,8 +237,8 @@ TL;DR Generates and executes SUT with all possible combinations of values
 
 This is a tiny wrapper around the Golden.Master method.
 */
-func Master(t Failable, f func(args ...any) any, values [][]any) {
-	G.Master(t, f, values)
+func Master(t Failable, f func(args ...any) any, values [][]any, options ...Option) {
+	G.Master(t, f, values, options...)
 }
 
 /*

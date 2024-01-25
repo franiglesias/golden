@@ -57,6 +57,24 @@ func TestGoldenMaster(t *testing.T) {
 		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestGoldenMaster/should_manage_the_error.snap.json")
 		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestGoldenMaster/should_manage_the_error.snap.json", "division by 0")
 	})
+
+	t.Run("should support custom name", func(t *testing.T) {
+		setUp(t)
+		f := func(args ...any) any {
+			result, err := division(args[0].(float64), args[1].(float64))
+			if err != nil {
+				return err.Error()
+			}
+			return result
+		}
+
+		dividend := []any{1.0, 2.0}
+		divisor := []any{0.0, -1.0, 1.0, 2.0}
+
+		gld.Master(&tSpy, f, golden.Values(dividend, divisor), golden.Snapshot("combinations"))
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/combinations.snap.json")
+		vfs.AssertSnapShotContains(t, fs, "__snapshots/combinations.snap.json", "division by 0")
+	})
 }
 
 func border(title string, part string, span int) string {

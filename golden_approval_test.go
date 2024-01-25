@@ -84,4 +84,23 @@ func TestToApprove(t *testing.T) {
 		gld.Verify(&tSpy, "updated subject.", golden.Snapshot("approval_snapshot"))
 		helper.AssertPassTest(t, &tSpy)
 	})
+
+	/*
+		Simulates the process of running approval tests until you obtain approval for
+		the generated snapshot, but with custom snapshot file name
+	*/
+	t.Run("should work with alternative API", func(t *testing.T) {
+		setUp(t)
+
+		gld.Verify(&tSpy, "starting subject.", golden.Snapshot("approval_snapshot"), golden.WaitApproval())
+		tSpy.Reset()
+
+		// After this run the snapshot will be approved by an expert
+		gld.Verify(&tSpy, "updated subject.", golden.Snapshot("approval_snapshot"), golden.WaitApproval())
+		tSpy.Reset()
+
+		// Last snapshot was approved, so we can change the test to Verification
+		gld.Verify(&tSpy, "updated subject.", golden.Snapshot("approval_snapshot"))
+		helper.AssertPassTest(t, &tSpy)
+	})
 }

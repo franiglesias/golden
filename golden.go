@@ -4,22 +4,48 @@ import (
 	"github.com/franiglesias/golden/internal/combinatory"
 	"github.com/franiglesias/golden/internal/vfs"
 	"log"
-	"path"
 	"sync"
 )
 
 type Option func(g *Config) Option
 
+/*
+Snapshot allows to pass a string to be used as file name of the current snapshot
+*/
 func Snapshot(name string) Option {
 	return func(c *Config) Option {
 		previous := c.name
 		c.name = name
-		return func(g *Config) Option {
+		return func(c *Config) Option {
 			return Snapshot(previous)
 		}
 	}
 }
 
+/*
+WaitApproval will execute this test in Approval Mode, so the snapshot will be
+updated but the test will not pass. To make the test pass, remove this option
+*/
+func WaitApproval() Option {
+	return func(c *Config) Option {
+		c.approve = true
+		return verifyMode()
+	}
+}
+
+/*
+verifyMode will return to verify Mode. It is used only internally to reset the WaitApproval option
+*/
+func verifyMode() Option {
+	return func(c *Config) Option {
+		c.approve = false
+		return WaitApproval()
+	}
+}
+
+/*
+Golden is the type that manage snapshotting and test evaluation
+*/
 type Golden struct {
 	sync.RWMutex
 	fs         vfs.Vfs
@@ -52,26 +78,26 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	}
 	var conf Config
 
-	conf = g.Defaults()
+	conf = g.testConfig()
 	subject := g.normalize(s)
 
 	name := conf.snapshotPath(t)
 
-	// approval mode is like snapshot doesn't exist, so we have to write it always
+	// approval mode work as if the snapshot doesn't exist, so we have to write it always
 
 	snapshotExists := g.snapshotExists(name)
-	if !snapshotExists || conf.toApprove() {
+	if !snapshotExists || conf.approvalMode() {
 		g.writeSnapshot(name, subject)
 	}
 	// We should reset the mode, so other test work as expected and you have to explicitly mark as toApprove
 	// But not here if we want to do something during reporting
 
 	snapshot := g.readSnapshot(name)
-	if snapshot != subject || conf.toApprove() {
-		// If Approval add some reminder in the header
+	if snapshot != subject || conf.approvalMode() {
+		// When Approval mode then add some reminder in the header
 		header := "**Verify mode**\n%s"
-		if conf.toApprove() {
-			header = "**Approval mode**: Replace 'ToApprove' with 'Verify' when you are happy with this snapshot.\n%s"
+		if conf.approvalMode() {
+			header = "**Approval mode**: Remove WaitApproval option or replace 'ToApprove' with 'Verify' when you are happy with this snapshot.\n%s"
 		}
 		t.Errorf(header, g.reportDiff(snapshot, subject))
 	}
@@ -87,10 +113,7 @@ review and approve the current snapshot.
 When you are totally ok with the snapshot, replace ToApprove with Verify in the test.
 */
 func (g *Golden) ToApprove(t Failable, subject any, options ...Option) {
-	g.Lock()
-	g.test.approve = true
-	g.Unlock()
-
+	options = append(options, WaitApproval())
 	g.Verify(t, subject, options...)
 }
 
@@ -151,19 +174,6 @@ func (g *Golden) readSnapshot(name string) string {
 	return string(snapshot)
 }
 
-func (g *Golden) snapshotPath(t Failable) string {
-	if g.test.name == "" {
-		g.test.name = t.Name()
-	}
-
-	snapshotName := path.Join(g.test.folder, g.test.name+g.test.ext)
-
-	// resets g.name after using it
-	g.test.name = ""
-
-	return snapshotName
-}
-
 /*
 UseSnapshot allows you custom the name of the snapshot. This can be useful when
 you want several snapshot in the same test. Also, it allows you to bring
@@ -176,7 +186,7 @@ func (g *Golden) UseSnapshot(name string) *Golden {
 	return g
 }
 
-func (g *Golden) Defaults() Config {
+func (g *Golden) testConfig() Config {
 	c := g.global.merge(g.test)
 	g.test = Config{}
 	return c
@@ -212,7 +222,7 @@ TL;DR Updates a snapshot until someone approves it
 This is a tiny wrapper around the Golden.ToApprove method.
 */
 func ToApprove(t Failable, subject any) {
-	G.Verify(t, subject)
+	G.ToApprove(t, subject)
 }
 
 /*

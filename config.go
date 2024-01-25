@@ -9,15 +9,6 @@ type Config struct {
 	approve bool
 }
 
-func Options() Config {
-	return Config{}
-}
-
-func (c Config) UseSnapshot(name string) Config {
-	c.name = name
-	return c
-}
-
 func (c Config) snapshotPath(t Failable) string {
 	if c.name == "" {
 		c.name = t.Name()
@@ -26,7 +17,7 @@ func (c Config) snapshotPath(t Failable) string {
 	return path.Join(c.folder, c.name+c.ext)
 }
 
-func (c Config) toApprove() bool {
+func (c Config) approvalMode() bool {
 	return c.approve
 }
 

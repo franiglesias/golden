@@ -8,6 +8,11 @@ import (
 )
 
 type Option func(g *Config) Option
+type Vals func(v ...[]any) [][]any
+
+func Values(v ...[]any) [][]any {
+	return v
+}
 
 /*
 Snapshot allows to pass a string to be used as file name of the current snapshot
@@ -133,7 +138,7 @@ The parameters received by the wrapper function are the result of combining all
 the possible values for each parameter that you would pass to the SUT. This will
 create a lot of tests (tenths or hundredths).
 */
-func (g *Golden) Master(t Failable, f func(args ...any) any, values ...[]any) {
+func (g *Golden) Master(t Failable, f func(args ...any) any, values [][]any) {
 	g.global.ext = ".snap.json"
 	subject := combinatory.Master(f, values...)
 	g.Verify(t, subject)
@@ -232,8 +237,8 @@ TL;DR Generates and executes SUT with all possible combinations of values
 
 This is a tiny wrapper around the Golden.Master method.
 */
-func Master(t Failable, f func(args ...any) any, values ...[]any) {
-	G.Master(t, f, values...)
+func Master(t Failable, f func(args ...any) any, values [][]any) {
+	G.Master(t, f, values)
 }
 
 /*

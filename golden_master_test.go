@@ -35,7 +35,7 @@ func TestGoldenMaster(t *testing.T) {
 		parts := []any{"*", "#"}
 		times := []any{1, 2}
 
-		gld.Master(&tSpy, f, titles, parts, times)
+		gld.Master(&tSpy, f, golden.Values(titles, parts, times))
 	})
 
 	t.Run("should manage the error", func(t *testing.T) {
@@ -51,7 +51,9 @@ func TestGoldenMaster(t *testing.T) {
 		dividend := []any{1.0, 2.0}
 		divisor := []any{0.0, -1.0, 1.0, 2.0}
 
-		gld.Master(&tSpy, f, dividend, divisor)
+		values := golden.Values(dividend, divisor)
+
+		gld.Master(&tSpy, f, values)
 		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestGoldenMaster/should_manage_the_error.snap.json")
 		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestGoldenMaster/should_manage_the_error.snap.json", "division by 0")
 	})

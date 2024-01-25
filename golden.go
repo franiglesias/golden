@@ -9,8 +9,9 @@ import (
 
 type Option func(g *Config) Option
 type Vals func(v ...[]any) [][]any
+type Wrapper func(args ...any) any
 
-func Values(v ...[]any) [][]any {
+func Combine(v ...[]any) [][]any {
 	return v
 }
 

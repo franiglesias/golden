@@ -86,12 +86,12 @@ review and approve the current snapshot.
 
 When you are totally ok with the snapshot, replace ToApprove with Verify in the test.
 */
-func (g *Golden) ToApprove(t Failable, subject any) {
+func (g *Golden) ToApprove(t Failable, subject any, options ...Option) {
 	g.Lock()
 	g.test.approve = true
 	g.Unlock()
 
-	g.Verify(t, subject)
+	g.Verify(t, subject, options...)
 }
 
 /*

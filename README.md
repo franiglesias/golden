@@ -67,7 +67,7 @@ This is useful if you need:
 
 ### Basic Usage: Approval mode
 
-**Warning**: We are considering an alternative API for approval mode.
+**Warning**: We are considering an alternative API for approval mode. We are going to remove this API in the final version.
 
 Approval mode is useful when you are writing new code. In this mode, the snapshot is generated and updated but the test never passes. Why? Because you will need to inspect the snapshot until you are happy with it, and you _approve_ it. Once you are satisfied with the contents of the snapshot, you replace the`golden.ToApprove` with `golden.Verify`. This way, you "approve" the current snapshot.
 
@@ -127,7 +127,7 @@ t.Run("should manage the error", func(t *testing.T) {
     dividend := []any{1.0, 2.0}
     divisor := []any{0.0, -1.0, 1.0, 2.0}
 
-    gld.Master(t, f, dividend, divisor)
+    gld.Master(t, f, golden.Values(dividend, divisor))
 })
 ```
 
@@ -187,19 +187,19 @@ I think that Approval Testing was first introduced by [Llewellyn Falco](https://
 
 Imagine you are writing some code that generates a complex struct, JSON object or another long and complex document. You need this object to be reviewed by a domain expert to ensure that it contains what is supposed to contain.
 
-If you work in "verification mode" you will have to delete every snapshot that is created when running the test. Instead of that, you can use the "approval mode". It is very easy: you simply have to use the "ToApprove" function until the snapshot reflects exactly what you or the domain expert want.
+If you work in "verification mode" you will have to delete every snapshot that is created when running the test. Instead of that, you can use the "approval mode". It is very easy: you simply have to pass the `golden.WaitApproval()` function option until the snapshot reflects exactly what you or the domain expert want.
 
 ```go
 func TestSomething(t *testing.T) {
     output := SomeFunction("param1", "param2")
 
-    golden.ToApprove(t, output)
+    golden.Verify(t, output, golden.WaitApproval())
 }
 ```
 
 This way, the test will always fail, and it will update the snapshot with the changes that happen in the output. This is because in "approval mode" you don't want to allow the test pass.
 
-So, how I can mark that a snapshot was approved? Easy: simple change the test to use the verification mode once you confirmed that the last snapshot was approved:
+So, how I can mark that a snapshot was approved? Easy: simple change the test to use the verification mode once you confirmed that the last snapshot was approved. Just remove the `WaitApproval` option.
 
 ```go
 func TestSomething(t *testing.T) {
@@ -277,7 +277,90 @@ func Division(a float64, b float64) (float64, error) {
 }
 ```
 
-And this is the test we've created for it:
+
+And this is the wrapper function we've created for it:
+
+```go
+f := func(args ...any) any {
+    result, err := Division(args[0].(float64), args[1].(float64))
+    if err != nil {
+        return err.Error()
+    }
+    return result
+}
+```
+**What can I do if the SUT doesn't return an output?** A suggested technique for this it to add some kind of logging facility that you can retrieve and use that output for the test.
+
+#### Prepare lists of values
+
+The next thing we need to do is to prepare collections of values for each parameter. You will populate a slice of `any`, with all the values that you want to test. The slice is typed as `any` to allow any kind of data, but remember to use types valid for the signature of the SUT.
+
+```go
+titles := []any{"Example 1", "Example long enough", "Another thing"}
+parts := []any{"-", "=", "*", "#"}
+times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+```
+
+You will pass the collections of values with the function `golden.Values`:
+
+```go
+golden.Values(titles, parts, times)
+```
+
+This example will generate 132 tests (3 * 4 * 11).
+
+**How can I choose the values?** It is an interesting question. In this example it doesn't matter the specific values because the code only has one execution flow. In many cases, you can find interesting values in conditionals, that control the execution flow, allowing you to obtain the most code coverage executing all possible branches. The precedent and following value of those are also interesting. If you are unsure, you can even use a batch with several random values. Remember that once you set up the test, adding or removing values is really easy.
+
+#### Put it all together
+
+And this is how you run a Golden Master test with Golden:
+
+```go
+t.Run("should create a golden master snapshot", func(t *testing.T) {
+    f := func(args ...any) any {
+        title := args[0].(string)
+        part := args[1].(string)
+        span := args[2].(int)
+        return Border(title, part, span)
+    }
+
+    titles := []any{"Example 1", "Example long enough", "Another thing"}
+    parts := []any{"-", "=", "*", "#"}
+    times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
+
+    golden.Master(t, f, golden.Values(titles, parts, times))
+})
+```
+
+`Master` method will invoke `Verify` under the hood, using the result of executing all the combinations to create the snapshot. This is a very special snapshot, by the way. First of all, it is a JSON file containing an array of JSON objects, each of them representing one example. Like this:
+
+
+```json
+[
+  {
+    "Id": 1,
+    "Params": "Example 1, -, 0",
+    "Output": "-----------\n-Example 1-\n-----------\n"
+  },
+  {
+    "Id": 2,
+    "Params": "Example long enough, -, 0",
+    "Output": "---------------------\n-Example long enough-\n---------------------\n"
+  },
+  {
+    "Id": 3,
+    "Params": "Another thing, -, 0",
+    "Output": "---------------\n-Another thing-\n---------------\n"
+  },
+  
+]
+```
+
+I think this will help you to understand the snapshot, identify easily some cases and even post-process the result if you need to.
+
+#### Another example, managing error:
+
+This is a test in which we manage error that can be returned by the SUT:
 
 ```go
 t.Run("should manage the error", func(t *testing.T) {
@@ -293,7 +376,7 @@ t.Run("should manage the error", func(t *testing.T) {
     dividend := []any{1.0, 2.0}
     divisor := []any{0.0, -1.0, 1.0, 2.0}
 
-    gld.Master(t, f, dividend, divisor)
+    gld.Master(t, f, golden.Values(dividend, divisor))
 })
 ```
 
@@ -344,68 +427,12 @@ Take a look at first records of the snapshot. The error message appears as the o
 ]
 ```
 
-**What can I do if the SUT doesn't return an output?** A suggested technique for this it to add some kind of logging facility that you can retrieve and use that output for the test.
+## Customizing the behavior
 
-#### Prepare lists of values
+YOU can use the option functions:
 
-The next thing we need to do is to prepare collections of values for each parameter. You will populate a slice of `any`, with all the values that you want to test. The slice is typed as `any` to allow any kind of data, but remember to use types valid for the signature of the SUT.
-
-```go
-titles := []any{"Example 1", "Example long enough", "Another thing"}
-parts := []any{"-", "=", "*", "#"}
-times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-```
-
-This example will generate 132 tests (3 * 4 * 11).
-
-**How can I choose the values?** It is an interesting question. In this example it doesn't matter the specific values because the code only has one execution flow. In many cases, you can find interesting values in conditionals, that control the execution flow, allowing you to obtain the most code coverage executing all possible branches. The precedent and following value of those are also interesting. If you are unsure, you can even use a batch with several random values. Remember that once you set up the test, adding or removing values is really easy.
-
-#### Put it all together
-
-And this is how you run a Golden Master test with Golden:
-
-```go
-t.Run("should create a golden master snapshot", func(t *testing.T) {
-    f := func(args ...any) any {
-        title := args[0].(string)
-        part := args[1].(string)
-        span := args[2].(int)
-        return Border(title, part, span)
-    }
-
-    titles := []any{"Example 1", "Example long enough", "Another thing"}
-    parts := []any{"-", "=", "*", "#"}
-    times := []any{0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10}
-
-    golden.Master(t, f, titles, parts, times)
-})
-```
-
-`Master` method will invoke `Verify` under the hood, using the result of executing all the combinations to create the snapshot. This is a very special snapshot, by the way. First of all, it is a JSON file containing an array of JSON objects, each of them representing one example. Like this:
-
-
-```json
-[
-  {
-    "Id": 1,
-    "Params": "Example 1, -, 0",
-    "Output": "-----------\n-Example 1-\n-----------\n"
-  },
-  {
-    "Id": 2,
-    "Params": "Example long enough, -, 0",
-    "Output": "---------------------\n-Example long enough-\n---------------------\n"
-  },
-  {
-    "Id": 3,
-    "Params": "Another thing, -, 0",
-    "Output": "---------------\n-Another thing-\n---------------\n"
-  },
-  
-]
-```
-
-I think this will help you to understand the snapshot, identify easily some cases and even post-process the result if you need to.
+* `Snapshot()`
+* `WaitApproval()`
 
 ## How to deal with Not Deterministic output
 

@@ -16,7 +16,18 @@ This is useful to:
 
 **Current Status**: Verify, approval and golden master mode. Test name customization. Mostly stable API. 
 
-**Pending features**: _Scrubbers_, that will let you manage not deterministic data.
+**Roadmap/Pending features**: 
+
+For v1.0.0:
+
+* _Scrubbers_, that will let you manage not deterministic data.
+
+For future releases:
+
+* Ability and API to use custom reporters
+* Ability and API to use custom normalizers
+* Ability and API to set the folder where snapshots are stored
+* Manage global options that apply to all tests
 
 **Usage advice**: Mostly ready for use, but use it at your own risk until it becomes stable, that will happen when v1.0.0 is released. Take into account that not all planned features are ready for prime time. API is pretty stable, but it could change as we are researching the best options.
 
@@ -64,7 +75,6 @@ func TestSomething(t *testing.T) {
 ```
 
 Once you or a domain expert approves the snapshot, remove the `golden.WaitApproval()` option. That's all.
-
 
 #### How it works
 

@@ -8,7 +8,7 @@ import (
 )
 
 /*
-Golden is the type that manage snapshotting and test evaluation
+Golden is the type that manages snapshotting and test evaluation
 */
 type Golden struct {
 	sync.RWMutex
@@ -20,11 +20,11 @@ type Golden struct {
 }
 
 /*
-Verify takes the subject and tries to compare with the content of the snapshot
+Verify takes the subject and tries to compare it with the content of the snapshot
 file. If this file doesn't exist, it creates it.
 
 If the contents of the snapshot and the subject are different, the test fails
-and a report of the differences are showed.
+and a report with the differences is showed.
 */
 func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	g.Lock()
@@ -40,9 +40,8 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	for _, option := range options {
 		option(&g.test)
 	}
-	var conf Config
 
-	conf = g.testConfig()
+	conf := g.testConfig()
 	subject := g.normalize(s)
 
 	name := conf.snapshotPath(t)
@@ -69,7 +68,7 @@ review and approve the current snapshot.
 
 When you are totally ok with the snapshot, replace ToApprove with Verify in the test.
 
-Deprecated:user golden.Verify(t, subject, WaitApproval()) instead
+Deprecated: use golden.Verify(t, subject, WaitApproval()) instead
 */
 func (g *Golden) ToApprove(t Failable, subject any, options ...Option) {
 	options = append(options, WaitApproval())
@@ -134,11 +133,13 @@ func (g *Golden) readSnapshot(name string) string {
 }
 
 /*
-UseSnapshot allows you custom the name of the snapshot. This can be useful when
-you want several snapshot in the same test. Also, it allows you to bring
-external files to use as snapshot.
+UseSnapshot allows you to customize the name of the snapshot. This can be useful
+when you want several snapshots in the same test. Also, it allows you to bring
+your own files to use them as snapshots.
 
-If you don't indicate any name, the snapshot will be named after the test.
+If you don't set any name, the snapshot will be named after the test.
+
+Deprecated: use golden.Verify(t, subject, golden.Snapshot("snapshot_name")) instead
 */
 func (g *Golden) UseSnapshot(name string) *Golden {
 	Snapshot(name)

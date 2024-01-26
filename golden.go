@@ -47,23 +47,16 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 
 	name := conf.snapshotPath(t)
 
-	// approval mode work as if the snapshot doesn't exist, so we have to write it always
+	// approval mode works as if the snapshot doesn't exist, so we have to write it always
 
 	snapshotExists := g.snapshotExists(name)
 	if !snapshotExists || conf.approvalMode() {
 		g.writeSnapshot(name, subject)
 	}
-	// We should reset the mode, so other test work as expected and you have to explicitly mark as toApprove
-	// But not here if we want to do something during reporting
 
 	snapshot := g.readSnapshot(name)
 	if snapshot != subject || conf.approvalMode() {
-		// When Approval mode then add some reminder in the header
-		header := "**Verify mode**\n%s"
-		if conf.approvalMode() {
-			header = "**Approval mode**: Remove WaitApproval option or replace 'ToApprove' with 'Verify' when you are happy with this snapshot.\n%s"
-		}
-		t.Errorf(header, g.reportDiff(snapshot, subject))
+		t.Errorf(conf.header(), g.reportDiff(snapshot, subject))
 	}
 
 	g.Unlock()
@@ -75,6 +68,8 @@ human approval. This is intentional and the purpose is to remind that you should
 review and approve the current snapshot.
 
 When you are totally ok with the snapshot, replace ToApprove with Verify in the test.
+
+Deprecated:user golden.Verify(t, subject, WaitApproval()) instead
 */
 func (g *Golden) ToApprove(t Failable, subject any, options ...Option) {
 	options = append(options, WaitApproval())
@@ -184,9 +179,11 @@ ToApprove see Golden.ToApprove
 TL;DR Updates a snapshot until someone approves it
 
 This is a tiny wrapper around the Golden.ToApprove method.
+
+Deprecated: use Verify(t, subject, WaitApproval())
 */
 func ToApprove(t Failable, subject any) {
-	G.ToApprove(t, subject)
+	G.Verify(t, subject, WaitApproval())
 }
 
 /*
@@ -203,7 +200,9 @@ func Master(t Failable, f combinatory.Wrapper, values [][]any, options ...Option
 /*
 UseSnapshot see Golden.UseSnapshot
 
-This is a tiny wrapper around the Golden.UseSnapshot method
+# This is a tiny wrapper around the Golden.UseSnapshot method
+
+Deprecated: use golden.Verify(t, subject , golden.Snapshot("snapshot_name") instead
 */
 func UseSnapshot(name string) *Golden {
 	return G.UseSnapshot(name)
@@ -267,8 +266,4 @@ between expected snapshot and subject
 */
 type DiffReporter interface {
 	Differences(want, got string) string
-}
-
-func Combine(v ...[]any) [][]any {
-	return v
 }

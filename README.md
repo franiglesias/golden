@@ -14,7 +14,9 @@ This is useful to:
 * understand and put legacy code under test
 * obtain high code coverage when starting to refactor legacy code or code that has no tests
 
-**Current Status**: Verify, approval and golden master mode. Test name customization. Unstable API (but mostly defined). 
+**Current Status**: Verify, approval and golden master mode. Test name customization. Mostly stable API. 
+
+**Pending features**: _Scrubbers_, that will let you manage not deterministic data.
 
 **Usage advice**: Mostly ready for use, but use it at your own risk until it becomes stable, that will happen when v1.0.0 is released. Take into account that not all planned features are ready for prime time. API is pretty stable, but it could change as we are researching the best options.
 

@@ -38,3 +38,10 @@ func (c Config) merge(other Config) Config {
 
 	return c
 }
+
+func (c Config) header() string {
+	if c.approvalMode() {
+		return "**Approval mode**: Remove WaitApproval() when you are happy with this snapshot.\n%s"
+	}
+	return "**Verify mode**\n%s"
+}

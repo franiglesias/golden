@@ -35,3 +35,12 @@ func verifyMode() Option {
 		return WaitApproval()
 	}
 }
+
+/*
+Combine is a convenience function that wraps the values you pass to golden.Master() tests.
+
+This way, the values can be received as a single parameter allowing Master to use options
+*/
+func Combine(v ...[]any) [][]any {
+	return v
+}

@@ -20,8 +20,5 @@ func (n JsonNormalizer) Normalize(subject any) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	trimmed := strings.Trim(string(rawSubject), `" \n`)
-	return trimmed, nil
+	return strings.Trim(string(rawSubject), `" \n`), nil
 }
-
-//TODO: consider support for scrubbers here

@@ -36,6 +36,9 @@ func (c Config) merge(other Config) Config {
 	if other.approve == true {
 		c.approve = other.approve
 	}
+	if len(other.scrubbers) != 0 {
+		c.scrubbers = other.scrubbers
+	}
 
 	return c
 }

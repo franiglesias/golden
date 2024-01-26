@@ -16,11 +16,13 @@ This is useful to:
 
 **Current Status**: Verify, approval and golden master mode. Test name customization. Mostly stable API. 
 
+We have [Scrubbers in place already](#how-to-deal-with-non-deterministic-output), but the support is experimental as we try to design the best API.
+
 **Roadmap/Pending features**: 
 
 For v1.0.0:
 
-* _Scrubbers_, that will let you manage not deterministic data.
+* _Scrubbers_, that will let you manage non-deterministic data.
 
 For future releases:
 
@@ -444,13 +446,69 @@ This is useful if you need:
 * Use an externally generated file as snapshot. For example, if you want your code to replicate the output of another system, provided that you have an example.
 
 
-## How to deal with Not Deterministic output
+## How to deal with Non-Deterministic output
 
 This is not an exclusive problem of snapshot testing. Managing non-deterministic output is always a problem. In assertion testing you can introduce property based testing: instead of looking for exact values, you can look for desired properties of the output.
 
 In snapshot testing things are a bit more complicated. It is difficult to check properties of a specific part of the output and ignore the value. Anyway, one solution is to look for specific patterns and do something about them: replace with a fixed but representative value, replace with some reminder... maybe it is possible to ignore that part of the output in order to compare with the snapshot.
 
-> Replacement of non-deterministic data is a planned feature for Golden.
+In Golden, as happens in other similar libraries, we can use `Scrubbers`. A Scrubber encapsulates a regexp match and replace, so you use the regexp tu describe the fragment of the subject that should be replaced, and provide a sensible substitution.
+
+You can see an example in this test. In the test, the subject has non-deterministic content because it takes the execution time of the test, so it will be different on every run. What we want to avoid the failure of the test is to replace the time part with something that never changes.
+
+The `scrubber` matches any time formatted as "15:04:05.000" and replaces it with "<Current Time>".
+
+```go
+t.Run("should scrub data", func(t *testing.T) {
+    setUp(t)
+
+    scrubber := golden.NewScrubber("\\d{2}:\\d{2}:\\d{2}.\\d{3}", "<Current Time>")
+
+    // Here we have a non-deterministic subject
+    subject := fmt.Sprintf("Current time is: %s", time.Now().Format("15:04:05.000"))
+
+    gld.Verify(&tSpy, subject, golden.WithScrubbers(scrubber))
+    helper.AssertPassTest(t, &tSpy)
+    vfs.AssertSnapShotContains(t, fs, "__snapshots/TestToApprove/should_scrub_data.snap", "<Current Time>")
+})
+```
+
+You could use any replacement string. In the previous example, we used a placeholder. But you could prefer to use an arbitrary time so when inspecting the snapshot you can see realistic data. This can be useful if you are trying to get approval for the snapshot, as long as it avoids having to explain that the real thing will be showing real times or whatever non-deterministic data that the software generate.
+
+### Caveats
+
+Scrubbers are handy, but it is not advisable to use lots of them. Having to use a lot of scrubbers means that you have a lot of non-deterministic data in the output, so replacing it will make your test pretty useless, because the data in the snapshot will be placeholders or replacements. 
+
+Review if you can avoid that by checking things like:
+
+* Avoid the use of random test data. If you need some Dummy objects, create them with fixed data (learn about the Object Mother pattern). 
+* Usually only times, dates, identifiers, and randomly generated things (like in a password generator), are non-deterministic. Scrubbing should be limited to them and only if they are generated inside the Subject Under Test. 
+* Consider software design: Avoid global state dependencies in the SUT, such as the system clock or random generators. Encapsulate that in objects or functions that you can double in your tests, providing predictable outputs.
+
+### Create Your Custom Scrubbers
+
+If you find that you are using many times the same regexp and replacement, consider creating a custom Scrubber.
+
+For example, in the previous test we used:
+
+```go
+scrubber := golden.NewScrubber("\\d{2}:\\d{2}:\\d{2}.\\d{3}", "<Current Time>")
+```
+
+You can encapsulate it in a constructor function. This way you can easily reuse in all the tests in which it makes sense.
+
+```go
+func TimeScrubber() Scrubber {
+	return golden.NewScrubber(
+		"\\d{2}:\\d{2}:\\d{2}.\\d{3}", 
+		"<Current Time>", 
+	)
+}
+
+scrubber := TimeScrubber()
+```
+
+This will allow you to enforce policies to scrub snapshots, by creating and using Scrubbers useful for your domain needs.
 
 ## How snapshots are named
 

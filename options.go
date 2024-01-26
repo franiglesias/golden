@@ -36,6 +36,13 @@ func verifyMode() Option {
 	}
 }
 
+func WithScrubbers(scrubbers ...Scrubber) Option {
+	return func(c *Config) Option {
+		c.scrubbers = scrubbers
+		return WithScrubbers()
+	}
+}
+
 /*
 Combine is a convenience function that wraps the values you pass to golden.Master() tests.
 

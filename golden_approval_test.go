@@ -1,10 +1,12 @@
 package golden_test
 
 import (
+	"fmt"
 	"github.com/franiglesias/golden"
 	"github.com/franiglesias/golden/internal/helper"
 	"github.com/franiglesias/golden/internal/vfs"
 	"testing"
+	"time"
 )
 
 func TestToApprove(t *testing.T) {
@@ -83,5 +85,18 @@ func TestToApprove(t *testing.T) {
 		// Last snapshot was approved, so we can change the test to Verification
 		gld.Verify(&tSpy, "updated subject.", golden.Snapshot("approval_snapshot"))
 		helper.AssertPassTest(t, &tSpy)
+	})
+
+	t.Run("should scrub data", func(t *testing.T) {
+		setUp(t)
+
+		scrubber := golden.NewScrubber("\\d{2}:\\d{2}:\\d{2}.\\d{3}", "<Current Time>")
+
+		// Here we have a non-deterministic subject
+		subject := fmt.Sprintf("Current time is: %s", time.Now().Format("15:04:05.000"))
+
+		gld.Verify(&tSpy, subject, golden.WithScrubbers(scrubber))
+		helper.AssertPassTest(t, &tSpy)
+		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestToApprove/should_scrub_data.snap", "<Current Time>")
 	})
 }

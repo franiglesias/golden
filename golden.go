@@ -42,7 +42,7 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	}
 
 	conf := g.testConfig()
-	subject := g.normalize(s)
+	subject := g.normalize(s, conf)
 
 	name := conf.snapshotPath(t)
 
@@ -101,10 +101,13 @@ func (g *Golden) reportDiff(snapshot string, subject string) string {
 	return g.reporter.Differences(snapshot, subject)
 }
 
-func (g *Golden) normalize(s any) string {
+func (g *Golden) normalize(s any, conf Config) string {
 	n, err := g.normalizer.Normalize(s)
 	if err != nil {
 		log.Fatalf("could not normalize subject %s: %s", n, err)
+	}
+	for _, scrubber := range conf.scrubbers {
+		n = scrubber.Clean(n)
 	}
 	return n
 }

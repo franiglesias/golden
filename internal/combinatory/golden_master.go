@@ -41,3 +41,5 @@ func joinSliceAsString(a []any) string {
 	}
 	return strings.Join(result, ", ")
 }
+
+type Wrapper func(args ...any) any

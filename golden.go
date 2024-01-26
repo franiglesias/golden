@@ -7,13 +7,6 @@ import (
 	"sync"
 )
 
-type Vals func(v ...[]any) [][]any
-type Wrapper func(args ...any) any
-
-func Combine(v ...[]any) [][]any {
-	return v
-}
-
 /*
 Golden is the type that manage snapshotting and test evaluation
 */
@@ -104,7 +97,7 @@ The parameters received by the wrapper function are the result of combining all
 the possible values for each parameter that you would pass to the SUT. This will
 create a lot of tests (tenths or hundredths).
 */
-func (g *Golden) Master(t Failable, f func(args ...any) any, values [][]any, options ...Option) {
+func (g *Golden) Master(t Failable, f combinatory.Wrapper, values [][]any, options ...Option) {
 	g.global.ext = ".snap.json"
 	subject := combinatory.Master(f, values...)
 	g.Verify(t, subject, options...)
@@ -203,7 +196,7 @@ TL;DR Generates and executes SUT with all possible combinations of values
 
 This is a tiny wrapper around the Golden.Master method.
 */
-func Master(t Failable, f func(args ...any) any, values [][]any, options ...Option) {
+func Master(t Failable, f combinatory.Wrapper, values [][]any, options ...Option) {
 	G.Master(t, f, values, options...)
 }
 
@@ -274,4 +267,8 @@ between expected snapshot and subject
 */
 type DiffReporter interface {
 	Differences(want, got string) string
+}
+
+func Combine(v ...[]any) [][]any {
+	return v
 }

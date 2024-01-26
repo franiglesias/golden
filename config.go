@@ -3,10 +3,11 @@ package golden
 import "path"
 
 type Config struct {
-	folder  string
-	name    string
-	ext     string
-	approve bool
+	folder    string
+	name      string
+	ext       string
+	approve   bool
+	scrubbers []Scrubber
 }
 
 func (c Config) snapshotPath(t Failable) string {

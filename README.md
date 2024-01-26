@@ -154,7 +154,7 @@ In snapshot testing, instead, you first obtain and persist the output of the cur
 
 Then, you make some changes in the affected code, execute the unit again and, finally, you compare this last output with the one you persisted. As you can guess, in order to make the test pass, the code changes should not affect the behavior. This way, it is easy to understand that snapshot testing is great to put existing working code under test.
 
-**Golden** automates the process of creating the snapshot the first time that the test runs using that snapshot as criteria in the following runs.
+**Golden** automates the snapshot creation process the first time the test is run, and uses that same snapshot as a criterion in subsequent runs.
 
 ```go
 golden.Verify(t, output)

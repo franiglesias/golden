@@ -173,8 +173,8 @@ TL;DR Verify the subject against a snapshot
 
 This is a tiny wrapper around the Golden.Verify method.
 */
-func Verify(t Failable, subject any) {
-	G.Verify(t, subject)
+func Verify(t Failable, subject any, options ...Option) {
+	G.Verify(t, subject, options...)
 }
 
 /*

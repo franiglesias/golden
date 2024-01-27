@@ -10,7 +10,7 @@ Scrubber modifies the subject, usually to replace not deterministic data for
 some fixed replacement, but you can create and apply scrubbers for cleaning the
 subject or obfuscate sensible data
 
-The basic Scrubber is a generic Scrubber that search for a regex pattern and replaces it
+The basic Scrubber is a generic Scrubber that searches for a regex pattern and replaces it
 */
 type Scrubber struct {
 	pattern     string
@@ -28,6 +28,12 @@ func (b Scrubber) Clean(subject string) string {
 	re := regexp.MustCompile(b.pattern)
 	return re.ReplaceAllString(subject, b.replacement)
 }
+
+/*
+
+ Custom Scrubbers
+
+*/
 
 /*
 CreditCard obfuscates credit card numbers

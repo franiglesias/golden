@@ -7,7 +7,7 @@ import (
 	"testing"
 )
 
-func Test_generate(t *testing.T) {
+func TestGenerate(t *testing.T) {
 	tests := []struct {
 		name string
 		args [][]any

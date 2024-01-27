@@ -9,6 +9,9 @@ import (
 	"testing"
 )
 
+/*
+TestGoldenMaster needs the same setup as TestVerify. Check it for documentation.
+*/
 func TestGoldenMaster(t *testing.T) {
 	var fs *vfs.MemFs
 	var gld golden.Golden
@@ -74,6 +77,25 @@ func TestGoldenMaster(t *testing.T) {
 		gld.Master(&tSpy, f, golden.Combine(dividend, divisor), golden.Snapshot("combinations"))
 		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/combinations.snap.json")
 		vfs.AssertSnapShotContains(t, fs, "__snapshots/combinations.snap.json", "division by 0")
+	})
+
+	t.Run("should support approval", func(t *testing.T) {
+		setUp(t)
+		f := func(args ...any) any {
+			result, err := division(args[0].(float64), args[1].(float64))
+			if err != nil {
+				return err.Error()
+			}
+			return result
+		}
+
+		dividend := []any{1.0, 2.0}
+		divisor := []any{0.0, -1.0, 1.0, 2.0}
+
+		gld.Master(&tSpy, f, golden.Combine(dividend, divisor), golden.WaitApproval())
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestGoldenMaster/should_support_approval.snap.json")
+		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestGoldenMaster/should_support_approval.snap.json", "division by 0")
+		helper.AssertFailedTest(t, &tSpy)
 	})
 }
 

@@ -13,14 +13,14 @@ Master generates a subject running tests for every parameter combination. We nee
 
 Should be a method of Golden. Not return
 */
-func Master(f func(args ...any) any, values ...[]any) []GM {
+func Master(f Wrapper, values ...[]any) []GM {
 
 	all := Generate(values)
 	var r []GM
 	for idx, combination := range all {
 		t := GM{
 			Id:     idx + 1,
-			Params: joinSliceAsString(combination),
+			Params: joinCommaSeparated(combination),
 			Output: f(combination...),
 		}
 		r = append(r, t)
@@ -34,7 +34,7 @@ type GM struct {
 	Output any
 }
 
-func joinSliceAsString(a []any) string {
+func joinCommaSeparated(a []any) string {
 	result := make([]string, len(a))
 	for i, item := range a {
 		result[i] = fmt.Sprintf("%v", item)

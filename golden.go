@@ -184,7 +184,7 @@ TL;DR Updates a snapshot until someone approves it
 
 This is a tiny wrapper around the Golden.ToApprove method.
 
-Deprecated: use Verify(t, subject, WaitApproval())
+Deprecated: use golden.Verify(t, subject, golden.WaitApproval()) instead
 */
 func ToApprove(t Failable, subject any) {
 	G.Verify(t, subject, WaitApproval())

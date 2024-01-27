@@ -30,7 +30,7 @@ func TestExample(t *testing.T) {
 	assert.Len(t, master, 44)
 }
 
-func TestWithThreeExample(t *testing.T) {
+func TestWithThreeParametersExample(t *testing.T) {
 	toTest := func(args ...any) any {
 		return Border(args[0].(string), args[1].(string), args[2].(int))
 	}

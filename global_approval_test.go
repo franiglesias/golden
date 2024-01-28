@@ -10,7 +10,7 @@ import (
 /*
 TestApproval needs the same setup as TestVerify. Check it for documentation.
 */
-func TestApproval(t *testing.T) {
+func TestGlobalApproval(t *testing.T) {
 	var gld golden.Golden
 	var fs *vfs.MemFs
 	var tSpy helper.TSpy
@@ -27,7 +27,7 @@ func TestApproval(t *testing.T) {
 		setUp(t)
 
 		gld.Verify(&tSpy, "some subject.", golden.WaitApproval())
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestApproval/should_create_snapshot_and_fail.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestGlobalApproval/should_create_snapshot_and_fail.snap")
 		helper.AssertFailedTest(t, &tSpy)
 	})
 
@@ -41,12 +41,12 @@ func TestApproval(t *testing.T) {
 
 		gld.Verify(&tSpy, "starting subject.", golden.WaitApproval())
 		helper.AssertFailedTest(t, &tSpy)
-		vfs.AssertContentWasStored(t, fs, "__snapshots/TestApproval/should_keep_test_failing_while_approval_mode.snap", []byte("starting subject."))
+		vfs.AssertContentWasStored(t, fs, "__snapshots/TestGlobalApproval/should_keep_test_failing_while_approval_mode.snap", []byte("starting subject."))
 		tSpy.Reset()
 
 		gld.Verify(&tSpy, "updated subject.", golden.WaitApproval())
 		helper.AssertFailedTest(t, &tSpy)
-		vfs.AssertContentWasStored(t, fs, "__snapshots/TestApproval/should_keep_test_failing_while_approval_mode.snap", []byte("updated subject."))
+		vfs.AssertContentWasStored(t, fs, "__snapshots/TestGlobalApproval/should_keep_test_failing_while_approval_mode.snap", []byte("updated subject."))
 		tSpy.Reset()
 	})
 

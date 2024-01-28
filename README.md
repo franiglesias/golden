@@ -14,13 +14,7 @@ This is useful to:
 * understand and put legacy code under test
 * obtain high code coverage when starting to refactor legacy code or code that has no tests
 
-**Current Status**: Most of the minimal functionality is in place and the API is mostly stable. This includes:
-
-* Snapshot testing
-* Approval testing
-* Golden Master testing
-* Scrubbers for managing non-deterministic data
-* Minimal customization
+**Current Status**: All features for v1.0.0 and stable API.
 
 **Roadmap/Pending features**: 
 
@@ -30,7 +24,7 @@ For v1.0.0:
 * Approval testing
 * Golden Master testing
 * Scrubbers for managing non-deterministic data
-* Some customization (snapshot name, snapshots folder and file extension)
+* Some customization (snapshot name, snapshots folder and file extension per snapshot)
 
 For future releases:
 

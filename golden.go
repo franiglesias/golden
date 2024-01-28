@@ -30,10 +30,6 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	g.Lock()
 	t.Helper()
 
-	// We should separate global configuration and test configuration
-	// This way we could start fresh on every run and reset after
-	// Also, this could be helpful to have separated global and per test config
-
 	// Global (defaults): path, reporter, ext, normalizer
 	// Per test: same as Global, approve mode, name
 

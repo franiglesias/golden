@@ -44,6 +44,36 @@ func WithScrubbers(scrubbers ...Scrubber) Option {
 }
 
 /*
+Folder configure a folder to store the snapshot
+
+Can be useful if you want to join several snapshot under some criteria
+*/
+func Folder(folder string) Option {
+	return func(c *Config) Option {
+		previous := c.folder
+		c.folder = folder
+		return func(c *Config) Option {
+			return Folder(previous)
+		}
+	}
+}
+
+/*
+Extension configure and extension for the snapshot file
+
+Can be useful if you want to manipulate the snapshot file based on type
+*/
+func Extension(extension string) Option {
+	return func(c *Config) Option {
+		previous := c.ext
+		c.ext = extension
+		return func(c *Config) Option {
+			return Extension(previous)
+		}
+	}
+}
+
+/*
 Combine is a convenience function that wraps the values you pass to golden.Master() tests.
 
 This way, the values can be received as a single parameter allowing Master to use options

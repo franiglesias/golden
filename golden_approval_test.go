@@ -88,4 +88,28 @@ func TestToApprove(t *testing.T) {
 		gld.Verify(&tSpy, "updated subject.", golden.Snapshot("approval_snapshot"))
 		helper.AssertPassTest(t, &tSpy)
 	})
+
+	t.Run("should detect and report differences first run", func(t *testing.T) {
+		setUp(t)
+
+		// Sets the snapshot for first time
+		gld.Verify(&tSpy, "original output.", golden.WaitApproval())
+
+		// Report should show original content as differences
+		helper.AssertFailedTest(t, &tSpy)
+		helper.AssertReportContains(t, &tSpy, "+original output.\n")
+	})
+
+	t.Run("should detect and report differences subsequent run", func(t *testing.T) {
+		setUp(t)
+
+		// Sets the snapshot for first time
+		gld.Verify(&tSpy, "original output.", golden.WaitApproval())
+
+		// Changes happened. Verify against existing snapshot
+		gld.Verify(&tSpy, "different output.", golden.WaitApproval())
+
+		helper.AssertFailedTest(t, &tSpy)
+		helper.AssertReportContains(t, &tSpy, "-original output.\n+different output.\n")
+	})
 }

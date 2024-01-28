@@ -46,14 +46,26 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 
 	name := conf.snapshotPath(t)
 
-	// approval mode works as if the snapshot doesn't exist, so we have to write it always
-
 	snapshotExists := g.snapshotExists(name)
+
+	// In approval mode we need to keep the existing snapshot if exists
+	// So we can report the differences
+
+	var snapshot string
+
+	if snapshotExists && conf.approvalMode() {
+		snapshot = g.readSnapshot(name)
+	}
+
+	// approval mode works as if the snapshot doesn't exist, so we have to write it always
 	if !snapshotExists || conf.approvalMode() {
 		g.writeSnapshot(name, subject)
 	}
 
-	snapshot := g.readSnapshot(name)
+	if !conf.approvalMode() {
+		snapshot = g.readSnapshot(name)
+	}
+
 	if snapshot != subject || conf.approvalMode() {
 		t.Errorf(conf.header(), g.reportDiff(snapshot, subject))
 	}

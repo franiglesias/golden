@@ -102,18 +102,6 @@ If the snapshot is ok for you, remove the option `golden.WaitApproval()`, so it 
 
 You can use the same options as with `Verify`, like `UseSnapshot`.
 
-#### Deprecated API
-
-This API will be removed in the stable 1.0.0. version.
-
-```go
-func TestSomething(t *testing.T) {
-	output := SomeFunction("param1", "param2")
-	
-	golden.ToApprove(t, output)
-}
-```
-
 ### Basic Usage: Golden Master mode
 
 Golden Master mode is useful when you want to generate a lot of tests combining different values of the subject under test parameters. It will generate all possible combinations, creating a detailed snapshot with all the results.

@@ -79,20 +79,6 @@ func (g *Golden) verifyFlow(t Failable, name string, subject string, conf Config
 }
 
 /*
-ToApprove acts exactly as Verify except that the test never passes waiting for
-human approval. This is intentional and the purpose is to remind that you should
-review and approve the current snapshot.
-
-When you are totally ok with the snapshot, replace ToApprove with Verify in the test.
-
-Deprecated: use golden.Verify(t, subject, WaitApproval()) instead
-*/
-func (g *Golden) ToApprove(t Failable, subject any, options ...Option) {
-	options = append(options, WaitApproval())
-	g.Verify(t, subject, options...)
-}
-
-/*
 Master generates all combinations of possible values for the parameters of
 the subject under test, executes the SUT with all those combinations,
 accumulates the outputs, and creates a snapshot of that using Verify internally.
@@ -152,20 +138,6 @@ func (g *Golden) readSnapshot(name string) string {
 	return string(snapshot)
 }
 
-/*
-UseSnapshot allows you to customize the name of the snapshot. This can be useful
-when you want several snapshots in the same test. Also, it allows you to bring
-your own files to use them as snapshots.
-
-If you don't set any name, the snapshot will be named after the test.
-
-Deprecated: use golden.Verify(t, subject, golden.Snapshot("snapshot_name")) instead
-*/
-func (g *Golden) UseSnapshot(name string) *Golden {
-	Snapshot(name)
-	return g
-}
-
 func (g *Golden) testConfig() Config {
 	c := g.global.merge(g.test)
 	g.test = Config{}
@@ -195,19 +167,6 @@ func Verify(t Failable, subject any, options ...Option) {
 }
 
 /*
-ToApprove see Golden.ToApprove
-
-TL;DR Updates a snapshot until someone approves it
-
-This is a tiny wrapper around the Golden.ToApprove method.
-
-Deprecated: use golden.Verify(t, subject, golden.WaitApproval()) instead
-*/
-func ToApprove(t Failable, subject any) {
-	G.Verify(t, subject, WaitApproval())
-}
-
-/*
 Master see Golden.Master
 
 TL;DR Generates and executes SUT with all possible combinations of values
@@ -216,17 +175,6 @@ This is a tiny wrapper around the Golden.Master method.
 */
 func Master(t Failable, f combinatory.Wrapper, values [][]any, options ...Option) {
 	G.Master(t, f, values, options...)
-}
-
-/*
-UseSnapshot see Golden.UseSnapshot
-
-# This is a tiny wrapper around the Golden.UseSnapshot method
-
-Deprecated: use golden.Verify(t, subject , golden.Snapshot("snapshot_name") instead
-*/
-func UseSnapshot(name string) *Golden {
-	return G.UseSnapshot(name)
 }
 
 /*

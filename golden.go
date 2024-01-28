@@ -46,31 +46,36 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 
 	name := conf.snapshotPath(t)
 
-	snapshotExists := g.snapshotExists(name)
-
-	// In approval mode we need to keep the existing snapshot if exists
-	// So we can report the differences
-
-	var snapshot string
-
-	if snapshotExists && conf.approvalMode() {
-		snapshot = g.readSnapshot(name)
-	}
-
-	// approval mode works as if the snapshot doesn't exist, so we have to write it always
-	if !snapshotExists || conf.approvalMode() {
-		g.writeSnapshot(name, subject)
-	}
-
-	if !conf.approvalMode() {
-		snapshot = g.readSnapshot(name)
-	}
-
-	if snapshot != subject || conf.approvalMode() {
-		t.Errorf(conf.header(), g.reportDiff(snapshot, subject))
+	if conf.approvalMode() {
+		g.approvalFlow(t, name, subject, conf)
+	} else {
+		g.verifyFlow(t, name, subject, conf)
 	}
 
 	g.Unlock()
+}
+
+func (g *Golden) approvalFlow(t Failable, name string, subject string, conf Config) {
+	var previous string
+	if g.snapshotExists(name) {
+		previous = g.readSnapshot(name)
+	}
+
+	g.writeSnapshot(name, subject)
+
+	t.Errorf(conf.header(), g.reportDiff(previous, subject))
+}
+
+func (g *Golden) verifyFlow(t Failable, name string, subject string, conf Config) {
+	if !g.snapshotExists(name) {
+		g.writeSnapshot(name, subject)
+	}
+
+	snapshot := g.readSnapshot(name)
+
+	if snapshot != subject {
+		t.Errorf(conf.header(), g.reportDiff(snapshot, subject))
+	}
 }
 
 /*

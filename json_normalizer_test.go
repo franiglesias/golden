@@ -40,26 +40,41 @@ func TestJsonNormalizer(t *testing.T) {
   "Item 2"
 ]`,
 		},
-		{name: "should remove leading and trailing spaces",
+		{
+			name: "slice ordering",
+			subject: map[string]string{
+				"ZField": "content",
+				"OField": "content 2",
+				"AField": "123",
+			},
+			want: `{
+  "AField": "123",
+  "OField": "content 2",
+  "ZField": "content"
+}`,
+		},
+		{
+			name:    "should remove leading and trailing spaces",
 			subject: "   This is a string   ",
 			want:    "This is a string",
 		},
-		{name: "should remove leading and trailing new lines",
+		{
+			name:    "should remove leading and trailing new lines",
 			subject: "\nThis is a string\n",
 			want:    "This is a string",
 		},
 		{
-			name:    "should normalize json string as is",
+			name:    "should normalize json string prettifying it",
 			subject: `{"object":{"id":"12345", "name":"My Object", "count":1234, "validated": true, "other": {"remark": "accept"}}}`,
 			want: `{
   "object": {
+    "count": 1234,
     "id": "12345",
     "name": "My Object",
-    "count": 1234,
-    "validated": true,
     "other": {
       "remark": "accept"
-    }
+    },
+    "validated": true
   }
 }`,
 		},

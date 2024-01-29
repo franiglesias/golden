@@ -3,6 +3,7 @@ package golden
 import (
 	"bytes"
 	"encoding/json"
+	"sort"
 	"strings"
 )
 
@@ -20,13 +21,11 @@ const indent = "  "
 const prefix = ""
 
 func (n JsonNormalizer) Normalize(subject any) (string, error) {
-	var rawSubject []byte
 	var output string
 	if _, ok := subject.(string); ok {
 		output = subject.(string)
 	} else {
-		var err error
-		rawSubject, err = json.MarshalIndent(subject, prefix, indent)
+		rawSubject, err := json.MarshalIndent(subject, prefix, indent)
 		output = string(rawSubject)
 		if err != nil {
 			return "", err
@@ -48,5 +47,52 @@ func prettyPrint(str string) string {
 		return str
 	}
 	// Return pretty json
-	return prettyJSON.String()
+	result, err := sortJSONFields(str)
+	if err != nil {
+		return prettyJSON.String()
+	}
+	return result
+}
+
+func sortJSONFields(jsonStr string) (string, error) {
+	var data map[string]interface{}
+	err := json.Unmarshal([]byte(jsonStr), &data)
+	if err != nil {
+		return "", err
+	}
+
+	sortMapFields(data)
+
+	prettyJSON, err := json.MarshalIndent(data, prefix, indent)
+	if err != nil {
+		return "", err
+	}
+
+	return string(prettyJSON), nil
+}
+
+func sortMapFields(m map[string]interface{}) {
+	for _, v := range m {
+		if nestedMap, ok := v.(map[string]interface{}); ok {
+			sortMapFields(nestedMap)
+		}
+	}
+
+	keys := make([]string, 0, len(m))
+	for k := range m {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+
+	sortedMap := make(map[string]interface{})
+	for _, k := range keys {
+		sortedMap[k] = m[k]
+	}
+
+	for k := range m {
+		delete(m, k)
+	}
+	for k, v := range sortedMap {
+		m[k] = v
+	}
 }

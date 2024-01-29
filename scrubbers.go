@@ -13,9 +13,9 @@ subject or obfuscate sensible data
 The basic Scrubber is a generic Scrubber that searches for a regex pattern and replaces it
 */
 type Scrubber struct {
-	pattern     string // The regexp pattern that describe what you are looking for
+	pattern     string // The regexp pattern that describes what you are looking for
 	replacement string // Default replacement
-	format      string // A format string that allow you to delimite the scope for replacement
+	format      string // A format string that allows you to define the scope for replacement
 }
 
 func NewScrubber(pattern, replacement string, opts ...ScrubberOption) Scrubber {
@@ -44,6 +44,8 @@ func (b Scrubber) Clean(subject string) string {
 
 /*
 CreditCard obfuscates credit card numbers
+
+	ccScrubber := golden.CreditCard()
 */
 func CreditCard(opts ...ScrubberOption) Scrubber {
 	return NewScrubber(
@@ -60,11 +62,15 @@ ULID replaces Unique Lexicographic Identifiers with <ULID> placeholder
 
 or you can specify a custom replacement
 
-	fixedULID := golden.ULID(golden.Replacement("01HNB10NSJS26X2RTERPZTM0KB"))
+	fixedULIDScrubber := golden.ULID(golden.Replacement("01HNB10NSJS26X2RTERPZTM0KB"))
 	anotherPlaceHolder := golden.ULID(golden.Replacement("[ULID here]]"))
 */
 func ULID(opts ...ScrubberOption) Scrubber {
-	return NewScrubber("[0-9A-Za-z]{26}", "<ULID>", opts...)
+	return NewScrubber(
+		"[0-9A-Za-z]{26}",
+		"<ULID>",
+		opts...,
+	)
 }
 
 /*
@@ -78,7 +84,7 @@ type ScrubberOption func(s *Scrubber)
 /*
 Replacement define a custom replacement for any specialized Scrubber
 
-	golden.ULID(golden.Replacement("[ULID comes here]"))
+	ulidScrubber := golden.ULID(golden.Replacement("[ULID comes here]"))
 */
 func Replacement(r string) ScrubberOption {
 	return func(s *Scrubber) {
@@ -90,7 +96,7 @@ func Replacement(r string) ScrubberOption {
 Format will help to limit the scrubbing to string that matches the format. Use
 the placeholder %s to indicate the part that you want to be scrubbed
 
-	golden.CreditCard(golden.Format("Credit Card: %s"))
+	ccScrubber := golden.CreditCard(golden.Format("Credit Card: %s"))
 
 will apply the CreditCard obfuscation only if it finds a Credit Card Number
 after a "Credit Card: " string. This way you can avoid scrubbing parts of the

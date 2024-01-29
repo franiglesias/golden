@@ -23,7 +23,7 @@ type LineDiffReporter struct{}
 
 func (LineDiffReporter) Differences(want, got string) string {
 	if want == got {
-		return "No differences found."
+		return noDifferences
 	}
 	diffs := diff.LineDiff(want, got)
 	return fmt.Sprintf(diffHeaderFormat, diffs)

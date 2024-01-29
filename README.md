@@ -495,7 +495,7 @@ Review if you can avoid that situation by checking things like:
 * Usually only times, dates, identifiers, and randomly generated things (like in a password generator), are non-deterministic. Scrubbing should be limited to them and only if they are generated inside the Subject Under Test. For example, if your code under test creates a random identifier, introduce and scrubber. But if you have a password field that is passed to the code under test, set any arbitrary valid value.
 * Consider software design: Avoid global state dependencies in the SUT, such as the system clock or random generators. Encapsulate that in objects or functions that you can inject in the SUT and double them in your tests, providing predictable outputs.
 
-### Create Your Custom Scrubbers
+### Create Custom Scrubbers
 
 If you find that you are using many times the same regexp and replacement, consider creating a custom Scrubber.
 
@@ -508,17 +508,75 @@ scrubber := golden.NewScrubber("\\d{2}:\\d{2}:\\d{2}.\\d{3}", "<Current Time>")
 You can encapsulate it in a constructor function. This way you can easily reuse in all the tests in which it makes sense.
 
 ```go
-func TimeScrubber() Scrubber {
+func TimeScrubber(opts ...ScrubberOption) Scrubber {
 	return golden.NewScrubber(
 		"\\d{2}:\\d{2}:\\d{2}.\\d{3}", 
 		"<Current Time>", 
+		opts...
 	)
 }
 
 scrubber := TimeScrubber()
 ```
 
-This will allow you to enforce policies to scrub snapshots, by creating and using Scrubbers that are useful for your domain needs.
+When writing Scrubbers, you should support the `opts ...ScrubberOption` parameter as in the previous example. This will allow your Scrubber to use `ScrubberOptions`, so you can modify the replacement or the context..
+
+This will allow you to enforce policies to scrub snapshots, introducing Scrubbers that are useful for your domain needs.
+
+### Predefined Scrubbers
+
+`CreditCard`: obfuscates credit card numbers
+
+```go
+func TestCreditCard(t *testing.T) {
+	scrubber := golden.CreditCard()
+	subject := "Credit card: 1234-5678-9012-1234"
+	assert.Equal(t, "Credit card: ****-****-****-1234", scrubber.Clean(subject))
+}
+```
+
+`ULID`: replaces a Universally Unique Lexicographically Sortable Identifier
+
+```go
+t.Run("should replace ULID", func(t *testing.T) {
+    scrubber := golden.ULID()
+    subject := "This is an ULID: 01HNAZ89E30JHFNJGQ84QFJBP3"
+    assert.Equal(t, "This is an ULID: <ULID>", scrubber.Clean(subject))
+})
+```
+
+
+### Options for Scrubbers
+
+`Replacement`: allows you to customize the replacement of any scrubber supporting options. Some scrubbers will put a placeholder as replacement, but in some cases you could prefer a different placeholder. 
+
+```go
+t.Run("should replace ULID with custom replacement", func(t *testing.T) {
+    scrubber := golden.ULID(golden.Replacement("[[Another thing]]"))
+    subject := "This is an ULID: 01HNAZ89E30JHFNJGQ84QFJBP3"
+    assert.Equal(t, "This is an ULID: [[Another thing]]", scrubber.Clean(subject))
+})
+```
+
+A fixed example of the value will help to better understand the generated snapshot to non-technical people.
+
+```go
+t.Run("should replace ULID with custom replacement", func(t *testing.T) {
+    scrubber := golden.ULID(golden.Replacement("01HNB9N6T6DEB1XN10C58DT1WE"))
+    subject := "This is an ULID: 01HNAZ89E30JHFNJGQ84QFJBP3"
+    assert.Equal(t, "This is an ULID: 01HNB9N6T6DEB1XN10C58DT1WE", scrubber.Clean(subject))
+})
+```
+
+`Format`: allows you to pass a format string that provides some context for replacements, so they will be only applied in certain parts of the output. In the following example, we only want to apply the obfuscation to the _Credit card_ field, but not to other codes that could be similar.
+
+```go
+t.Run("should obfuscated only credit card number", func(t *testing.T) {
+    scrubber := golden.CreditCard(golden.Format("Credit card: %s"))
+    subject := "Credit card: 1234-5678-9012-1234, Another code: 4561-1234-4532-6543"
+    assert.Equal(t, "Credit card: ****-****-****-1234, Another code: 4561-1234-4532-6543", scrubber.Clean(subject))
+})
+```
 
 ## How snapshots are named
 

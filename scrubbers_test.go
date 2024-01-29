@@ -30,16 +30,16 @@ func TestCreditCard(t *testing.T) {
 }
 
 func TestFormatScrubber(t *testing.T) {
-	t.Run("should obfuscated only credit card number", func(t *testing.T) {
-		scrubber := golden.CreditCard(golden.Format("Credit card: %s"))
-		subject := "Credit card: 1234-5678-9012-1234, Another code: 4561-1234-4532-6543"
-		assert.Equal(t, "Credit card: ****-****-****-1234, Another code: 4561-1234-4532-6543", scrubber.Clean(subject))
-	})
-
 	t.Run("should obfuscate all numbers", func(t *testing.T) {
 		scrubber := golden.CreditCard()
 		subject := "Credit card: 1234-5678-9012-1234, Another code: 4561-1234-4532-6543"
 		assert.Equal(t, "Credit card: ****-****-****-1234, Another code: ****-****-****-6543", scrubber.Clean(subject))
+	})
+
+	t.Run("should obfuscated only credit card number", func(t *testing.T) {
+		scrubber := golden.CreditCard(golden.Format("Credit card: %s"))
+		subject := "Credit card: 1234-5678-9012-1234, Another code: 4561-1234-4532-6543"
+		assert.Equal(t, "Credit card: ****-****-****-1234, Another code: 4561-1234-4532-6543", scrubber.Clean(subject))
 	})
 }
 

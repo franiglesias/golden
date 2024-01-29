@@ -61,3 +61,19 @@ func Format(f string, s Scrubber) Scrubber {
 		fmt.Sprintf(f, s.replacement),
 	)
 }
+
+func ULID(opts ...ScrubberOption) Scrubber {
+	scrubber := NewScrubber("[0-9A-Za-z]{26}", "<ULID>")
+	for _, opt := range opts {
+		opt(&scrubber)
+	}
+	return scrubber
+}
+
+type ScrubberOption func(s *Scrubber)
+
+func Replacement(r string) ScrubberOption {
+	return func(s *Scrubber) {
+		s.replacement = r
+	}
+}

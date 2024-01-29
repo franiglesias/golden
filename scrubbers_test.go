@@ -42,3 +42,17 @@ func TestFormatScrubber(t *testing.T) {
 		assert.Equal(t, "Credit card: ****-****-****-1234, Another code: ****-****-****-6543", scrubber.Clean(subject))
 	})
 }
+
+func TestULIDScrubber(t *testing.T) {
+	t.Run("should replace ULID", func(t *testing.T) {
+		scrubber := golden.ULID()
+		subject := "This is an ULID: 01HNAZ89E30JHFNJGQ84QFJBP3"
+		assert.Equal(t, "This is an ULID: <ULID>", scrubber.Clean(subject))
+	})
+
+	t.Run("should replace ULID with custom replacement", func(t *testing.T) {
+		scrubber := golden.ULID(golden.Replacement("[[Another thing]]"))
+		subject := "This is an ULID: 01HNAZ89E30JHFNJGQ84QFJBP3"
+		assert.Equal(t, "This is an ULID: [[Another thing]]", scrubber.Clean(subject))
+	})
+}

@@ -25,8 +25,7 @@ file. If this file doesn't exist, it creates it.
 
 If the contents of the snapshot and the subject are different, the test fails
 and a report with the differences is showed.
-*/
-func (g *Golden) Verify(t Failable, s any, options ...Option) {
+*/func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	g.Lock()
 	t.Helper()
 

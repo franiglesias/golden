@@ -7,6 +7,9 @@ import (
 	"sync"
 )
 
+const approvalHeader = "**Approval mode**: Remove WaitApproval() when you are happy with this snapshot.\n%s"
+const verifyHeader = "**Verify mode**\n%s"
+
 /*
 Golden is the type that manages snapshotting and test evaluation
 */
@@ -15,7 +18,6 @@ type Golden struct {
 	fs         vfs.Vfs
 	normalizer Normalizer
 	reporter   DiffReporter
-	test       Config
 	global     Config
 }
 
@@ -29,28 +31,25 @@ and a report with the differences is showed.
 	g.Lock()
 	t.Helper()
 
-	// Global (defaults): path, reporter, ext, normalizer
-	// Per test: same as Global, approve mode, name
-
+	conf := g.global
 	for _, option := range options {
-		option(&g.test)
+		option(&conf)
 	}
 
-	conf := g.testConfig()
-	subject := g.normalize(s, conf)
+	subject := g.normalize(s, conf.scrubbers)
 
 	name := conf.snapshotPath(t)
 
 	if conf.approvalMode() {
-		g.approvalFlow(t, name, subject, conf)
+		g.approvalFlow(t, name, subject)
 	} else {
-		g.verifyFlow(t, name, subject, conf)
+		g.verifyFlow(t, name, subject)
 	}
 
 	g.Unlock()
 }
 
-func (g *Golden) approvalFlow(t Failable, name string, subject string, conf Config) {
+func (g *Golden) approvalFlow(t Failable, name string, subject string) {
 	var previous string
 	if g.snapshotExists(name) {
 		previous = g.readSnapshot(name)
@@ -58,10 +57,10 @@ func (g *Golden) approvalFlow(t Failable, name string, subject string, conf Conf
 
 	g.writeSnapshot(name, subject)
 
-	t.Errorf(conf.header(), g.reportDiff(previous, subject))
+	t.Errorf(approvalHeader, g.reportDiff(previous, subject))
 }
 
-func (g *Golden) verifyFlow(t Failable, name string, subject string, conf Config) {
+func (g *Golden) verifyFlow(t Failable, name string, subject string) {
 	if !g.snapshotExists(name) {
 		g.writeSnapshot(name, subject)
 	}
@@ -69,7 +68,7 @@ func (g *Golden) verifyFlow(t Failable, name string, subject string, conf Config
 	snapshot := g.readSnapshot(name)
 
 	if snapshot != subject {
-		t.Errorf(conf.header(), g.reportDiff(snapshot, subject))
+		t.Errorf(verifyHeader, g.reportDiff(snapshot, subject))
 	}
 }
 
@@ -99,12 +98,12 @@ func (g *Golden) reportDiff(snapshot string, subject string) string {
 	return g.reporter.Differences(snapshot, subject)
 }
 
-func (g *Golden) normalize(s any, conf Config) string {
+func (g *Golden) normalize(s any, scrubbers []Scrubber) string {
 	n, err := g.normalizer.Normalize(s)
 	if err != nil {
 		log.Fatalf("could not normalize subject %s: %s", n, err)
 	}
-	for _, scrubber := range conf.scrubbers {
+	for _, scrubber := range scrubbers {
 		n = scrubber.Clean(n)
 	}
 	return n
@@ -131,12 +130,6 @@ func (g *Golden) readSnapshot(name string) string {
 		log.Fatalf("could not read snapshot %s: %s", name, err)
 	}
 	return string(snapshot)
-}
-
-func (g *Golden) testConfig() Config {
-	c := g.global.merge(g.test)
-	g.test = Config{}
-	return c
 }
 
 /*
@@ -187,15 +180,13 @@ NewUsingFs initializes a new Golden object allowing us to change some defaults
 from the beginning. Usually for testing purposes only
 */
 func NewUsingFs(fs vfs.Vfs) *Golden {
-	g := Config{
-		folder:  "__snapshots",
-		name:    "",
-		ext:     ".snap",
-		approve: false,
-	}
 	return &Golden{
-		global:     g,
-		test:       Config{},
+		global: Config{
+			folder:  "__snapshots",
+			name:    "",
+			ext:     ".snap",
+			approve: false,
+		},
 		fs:         fs,
 		normalizer: JsonNormalizer{},
 		reporter:   LineDiffReporter{},

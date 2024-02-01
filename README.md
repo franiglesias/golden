@@ -559,6 +559,23 @@ func TestShouldScrubData(t *testing.T) {
 
 You could use any replacement string. In the previous example, we used a placeholder. But you could prefer to use an arbitrary time so when inspecting the snapshot you can see realistic data. This can be useful if you are trying to get approval for the snapshot, as long as it avoids having to explain that the real thing will be showing real times or whatever non-deterministic data that the software generates.
 
+## Replacing fields in Json Files with PathScrubbers
+
+If you are testing Json files you probably will want to scrub specific fields in the output. Instead of searching for a pattern in the file, you want to search for a path to a field. We have you covered with PathScrubber.
+
+The PathScrubber allows you to specify a path and replace its contents unconditionally. If the path is not found, no replacement will be performed.
+
+```go
+func TestBasicPathScrubbing(t *testing.T) {
+    scrubber := golden.NewPathScrubber("object.other.remark", "<Replacement>")
+
+    subject := `{"object":{"id":"12345", "name":"My Object", "count":1234, "validated": true, "other": {"remark": "accept"}}}`
+    result := scrubber.Clean(subject)
+    want := `{"object":{"id":"12345", "name":"My Object", "count":1234, "validated": true, "other": {"remark": "<Replacement>"}}}`
+    assert.Equal(t, want, result)
+}
+```
+
 ### Caveats
 
 Scrubbers are handy, but it is not advisable to use lots of them in the same test. Having to use a lot of scrubbers means that you have a lot of non-deterministic data in the output, so replacing it will make your test pretty useless because the data in the snapshot will be placeholders or replacements for the most part.
@@ -571,7 +588,7 @@ Review if you can avoid that situation by checking things like:
 
 ### Create Custom Scrubbers
 
-If you find that you are using many times the same regexp and replacement, consider creating a custom Scrubber.
+If you find that you are using many times the same regexp and replacement, consider creating a custom _Scrubber_.
 
 For example, in the previous test, we used:
 

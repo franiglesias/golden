@@ -56,3 +56,27 @@ func TestULIDScrubber(t *testing.T) {
 		assert.Equal(t, "This is an ULID: [[Another thing]]", scrubber.Clean(subject))
 	})
 }
+
+func TestBasicPathScrubbing(t *testing.T) {
+	t.Run("should not replace anything if no match", func(t *testing.T) {
+		subject := "A string not suspicions of contain anything to remove"
+		scrubber := golden.NewPathScrubber("some.path", "<Replacement>")
+		result := scrubber.Clean(subject)
+		assert.Equal(t, subject, result)
+	})
+
+	t.Run("should replace simple path", func(t *testing.T) {
+		subject := `{"object":{"id":"12345", "name":"My Object", "count":1234, "validated": true, "other": {"remark": "accept"}}}`
+		scrubber := golden.NewPathScrubber("object", "<Replacement>")
+		result := scrubber.Clean(subject)
+		assert.Equal(t, `{"object":"<Replacement>"}`, result)
+	})
+
+	t.Run("should replace inner path", func(t *testing.T) {
+		subject := `{"object":{"id":"12345", "name":"My Object", "count":1234, "validated": true, "other": {"remark": "accept"}}}`
+		scrubber := golden.NewPathScrubber("object.other.remark", "<Replacement>")
+		result := scrubber.Clean(subject)
+		want := `{"object":{"id":"12345", "name":"My Object", "count":1234, "validated": true, "other": {"remark": "<Replacement>"}}}`
+		assert.Equal(t, want, result)
+	})
+}

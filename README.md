@@ -4,6 +4,8 @@ A Go library for snapshot 📸 testing.
 
 [Reference](https://pkg.go.dev/github.com/franiglesias/golden)
 
+[Cookbook: recipes and how-tos](doc/cookbook.md)
+
 - [TL;DR](#TLDR)
     - [🛠 Installation](#installation)
     - [📸 Basic Usage: Verify against an auto-generated snapshot](#basic-usage-verify-against-an-auto-generated-snapshot)

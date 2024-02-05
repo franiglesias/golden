@@ -4,7 +4,7 @@ A Go library for snapshot 📸 testing.
 
 [Reference](https://pkg.go.dev/github.com/franiglesias/golden)
 
-[Cookbook: recipes and how-tos](doc/cookbook.md)
+[Cookbook: recipes and how-tos](doc/cookbook.md) (WIP)
 
 - [TL;DR](#TLDR)
     - [🛠 Installation](#installation)
@@ -29,6 +29,7 @@ A Go library for snapshot 📸 testing.
     - [Customize the folder to store the snapshot](#customize-the-folder-to-store-the-snapshot)
     - [Customize the extension of the snapshot file](#customize-the-extension-of-the-snapshot-file)
 - [Dealing with Non-Deterministic output](#dealing-with-non-deterministic-output)
+    - [Replacing fields in Json Files with PathScrubbers](#replacing-fields-in-json-files-with-pathscrubbers)
     - [Caveats](#caveats)
     - [Create Custom Scrubbers](#create-custom-scrubbers)
     - [Predefined Scrubbers](#predefined-scrubbers)
@@ -46,17 +47,9 @@ This is useful for:
 * Understand and put legacy code under test.
 * Obtain high code coverage when starting to refactor legacy code or code that has no tests.
 
-**Current Status**: Ready for v1.0.0 and stable API.
+**Current Status**: v1.x
 
 **Roadmap/Pending features**:
-
-For v1.0.0:
-
-* Snapshot testing
-* Approval testing
-* Golden Master testing
-* Scrubbers for managing non-deterministic data
-* Test basic customization (snapshot name, snapshot folder, and file extension per snapshot)
 
 For future releases:
 
@@ -64,8 +57,9 @@ For future releases:
 * Ability and API to use custom normalizers.
 * Global options that apply to all tests.
 * Better scoping of Scrubbers for JSON content, using paths.
+* Defaults to Go conventions (i.e.: testdata folder instead of __snapshots)
 
-**Usage advice**: Mostly ready for use. No public API changes before v1.0.0. Only working on documentation fixes and refactoring.
+**Usage advice**: Ready for use.
 
 ### Installation
 
@@ -561,7 +555,7 @@ func TestShouldScrubData(t *testing.T) {
 
 You could use any replacement string. In the previous example, we used a placeholder. But you could prefer to use an arbitrary time so when inspecting the snapshot you can see realistic data. This can be useful if you are trying to get approval for the snapshot, as long as it avoids having to explain that the real thing will be showing real times or whatever non-deterministic data that the software generates.
 
-## Replacing fields in Json Files with PathScrubbers
+### Replacing fields in Json Files with PathScrubbers
 
 If you are testing Json files you probably will want to scrub specific fields in the output. Instead of searching for a pattern in the file, you want to search for a path to a field. We have you covered with PathScrubber.
 

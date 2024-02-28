@@ -48,18 +48,20 @@ This is useful for:
 * Understand and put legacy code under test.
 * Obtain high code coverage when starting to refactor legacy code or code that has no tests.
 
-**Current Status**: v1.x
+**Current Status**: v1.2
 
 **Last changes**
 
-**Roadmap/Pending features**:
-
 * Defaults to Go conventions (i.e.: testdata folder instead of __snapshots)
-* Global defaults: golden.Folder and golden.Extension can be set as global default:
+* Global defaults: golden.Folder and golden.Extension can be set as global default. [Details about how to use this](#set-your-own-defaults):
 
 ```go
 golden.Defaults(golden.Folder("__other_folder"))
 ```
+
+
+
+**Roadmap/Pending features**:
 
 For future releases:
 
@@ -539,7 +541,7 @@ This option is useful if your snapshot can be files of a certain type, like CSV,
 
 ### Set your own defaults
 
-You can customize a **default snapshots folder**, by passing the option `golden.Folder()` to `Defaults`:
+**Folder.** You can customize a **default snapshots folder**, by passing the option `golden.Folder()` to `Defaults`:
 
 ```go
 func TestSomething(t *testing.T) {
@@ -552,7 +554,7 @@ func TestSomething(t *testing.T) {
 
 This will generate the subsequent snapshots inside `special/` folder in the same package as the test.
 
-You can customize the **default snapshot extension**, by passing `golden.Extension()` to `Defaults()`:
+**Extension.** You can customize the **default snapshot extension**, by passing `golden.Extension()` to `Defaults()`:
 
 ```go
 func TestSomething(t *testing.T) {
@@ -565,6 +567,22 @@ func TestSomething(t *testing.T) {
 
 This will generate the snapshots with the `.json` extension.
 
+**Scoping Defaults.** You can scope the Defaults for a Package by adding a **main_test.go** file inside a package with a `TestMain` function like in the example (replace `myPackage` with the name of your package):
+
+```go
+package myPackage_test
+
+import (
+	"github.com/franiglesias/golden"
+	"os"
+	"testing"
+)
+
+func TestMain(m *testing.M) {
+	golden.Defaults(golden.Folder("__golden"), golden.Extension(".txt"))
+	os.Exit(m.Run())
+}
+```
 
 ## Dealing with Non-Deterministic output
 

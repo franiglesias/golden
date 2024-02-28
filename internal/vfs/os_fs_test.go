@@ -40,7 +40,7 @@ func TestOsFs(t *testing.T) {
 	})
 
 	t.Run("should allow full paths", func(t *testing.T) {
-		filePath := "__snapshots/file.snap"
+		filePath := "testdata/file.snap"
 
 		content := []byte("some content")
 		err := osFs.WriteFile(filePath, content)

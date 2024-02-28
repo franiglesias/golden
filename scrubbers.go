@@ -54,11 +54,11 @@ type PathScrubber struct {
 	baseScrubber
 }
 
-func NewPathScrubber(pattern, replacement string, opts ...ScrubberOption) PathScrubber {
+func NewPathScrubber(path, replacement string, opts ...ScrubberOption) PathScrubber {
 	s := baseScrubber{
 		target:      "",
 		replacement: replacement,
-		context:     pattern,
+		context:     path,
 	}
 
 	for _, opt := range opts {

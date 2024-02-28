@@ -182,7 +182,7 @@ from the beginning. Usually for testing purposes only
 func NewUsingFs(fs vfs.Vfs) *Golden {
 	return &Golden{
 		global: Config{
-			folder:  "__snapshots",
+			folder:  "testdata",
 			name:    "",
 			ext:     ".snap",
 			approve: false,

@@ -21,7 +21,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("should configure snapshot folder", func(t *testing.T) {
-		c := Config{folder: "__snapshots"}
+		c := Config{folder: "testdata"}
 		option := Folder("a_folder")
 		option(&c)
 		assert.Equal(t, "a_folder", c.folder)

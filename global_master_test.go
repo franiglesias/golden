@@ -54,8 +54,8 @@ func TestGlobalMaster(t *testing.T) {
 		values := golden.Combine(dividend, divisor)
 
 		golden.Master(&tSpy, f, values)
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestGlobalMaster/should_manage_the_error.snap.json")
-		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestGlobalMaster/should_manage_the_error.snap.json", "division by 0")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/TestGlobalMaster/should_manage_the_error.snap.json")
+		vfs.AssertSnapShotContains(t, fs, "testdata/TestGlobalMaster/should_manage_the_error.snap.json", "division by 0")
 	})
 
 	t.Run("should support custom name", func(t *testing.T) {
@@ -72,8 +72,8 @@ func TestGlobalMaster(t *testing.T) {
 		divisor := []any{0.0, -1.0, 1.0, 2.0}
 
 		golden.Master(&tSpy, f, golden.Combine(dividend, divisor), golden.Snapshot("combinations"))
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/combinations.snap.json")
-		vfs.AssertSnapShotContains(t, fs, "__snapshots/combinations.snap.json", "division by 0")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/combinations.snap.json")
+		vfs.AssertSnapShotContains(t, fs, "testdata/combinations.snap.json", "division by 0")
 	})
 
 	t.Run("should support approval", func(t *testing.T) {
@@ -90,8 +90,8 @@ func TestGlobalMaster(t *testing.T) {
 		divisor := []any{0.0, -1.0, 1.0, 2.0}
 
 		golden.Master(&tSpy, f, golden.Combine(dividend, divisor), golden.WaitApproval())
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestGlobalMaster/should_support_approval.snap.json")
-		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestGlobalMaster/should_support_approval.snap.json", "division by 0")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/TestGlobalMaster/should_support_approval.snap.json")
+		vfs.AssertSnapShotContains(t, fs, "testdata/TestGlobalMaster/should_support_approval.snap.json", "division by 0")
 		helper.AssertFailedTest(t, &tSpy)
 	})
 }

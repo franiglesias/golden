@@ -45,7 +45,7 @@ func TestVerify(t *testing.T) {
 		setUp(t)
 
 		gld.Verify(t, "some subject.")
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_create_snapshot_if_not_exists.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/TestVerify/should_create_snapshot_if_not_exists.snap")
 	})
 
 	t.Run("should write subject as snapshot content", func(t *testing.T) {
@@ -53,7 +53,7 @@ func TestVerify(t *testing.T) {
 
 		gld.Verify(t, "some output.")
 		expected := []byte("some output.")
-		vfs.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_write_subject_as_snapshot_content.snap", expected)
+		vfs.AssertContentWasStored(t, fs, "testdata/TestVerify/should_write_subject_as_snapshot_content.snap", expected)
 	})
 
 	t.Run("should not alter snapshot when it already exists", func(t *testing.T) {
@@ -64,7 +64,7 @@ func TestVerify(t *testing.T) {
 
 		want := []byte(("some output."))
 
-		vfs.AssertContentWasStored(t, fs, "__snapshots/TestVerify/should_not_alter_snapshot_when_it_already_exists.snap", want)
+		vfs.AssertContentWasStored(t, fs, "testdata/TestVerify/should_not_alter_snapshot_when_it_already_exists.snap", want)
 	})
 
 	t.Run("should detect and report differences by line", func(t *testing.T) {
@@ -84,7 +84,7 @@ func TestVerify(t *testing.T) {
 
 		gld.Verify(&tSpy, "original output", golden.Snapshot("custom_snapshot"))
 
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/custom_snapshot.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/custom_snapshot.snap")
 	})
 
 	t.Run("should use default name after spend customized", func(t *testing.T) {
@@ -93,15 +93,15 @@ func TestVerify(t *testing.T) {
 		gld.Verify(&tSpy, "original output", golden.Snapshot("custom_snapshot"))
 		gld.Verify(&tSpy, "original output")
 
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/custom_snapshot.snap")
-		vfs.AssertSnapshotWasCreated(t, fs, "__snapshots/TestVerify/should_use_default_name_after_spend_customized.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/custom_snapshot.snap")
+		vfs.AssertSnapshotWasCreated(t, fs, "testdata/TestVerify/should_use_default_name_after_spend_customized.snap")
 	})
 
 	t.Run("should allow external file via custom name", func(t *testing.T) {
 		setUp(t)
 
 		// Creates a file in the path, simulating that we put our own
-		err := fs.WriteFile("__snapshots/external_snapshot.snap", []byte("external output"))
+		err := fs.WriteFile("testdata/external_snapshot.snap", []byte("external output"))
 		assert.NoError(t, err)
 
 		// By default, golden would create a snapshot. But given that we have a file in
@@ -122,6 +122,6 @@ func TestVerify(t *testing.T) {
 
 		gld.Verify(&tSpy, subject, golden.WithScrubbers(scrubber))
 		helper.AssertPassTest(t, &tSpy)
-		vfs.AssertSnapShotContains(t, fs, "__snapshots/TestVerify/should_scrub_data.snap", "<Current Time>")
+		vfs.AssertSnapShotContains(t, fs, "testdata/TestVerify/should_scrub_data.snap", "<Current Time>")
 	})
 }

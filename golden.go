@@ -27,7 +27,8 @@ file. If this file doesn't exist, it creates it.
 
 If the contents of the snapshot and the subject are different, the test fails
 and a report with the differences is showed.
-*/func (g *Golden) Verify(t Failable, s any, options ...Option) {
+*/
+func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	g.Lock()
 	t.Helper()
 
@@ -132,6 +133,14 @@ func (g *Golden) readSnapshot(name string) string {
 	return string(snapshot)
 }
 
+func (g *Golden) Defaults(opts ...Option) {
+	for _, opt := range opts {
+		opt(&g.global)
+	}
+	// pretty dirty hack to neutralize Snapshot option
+	g.global.name = ""
+}
+
 /*
 
 Global vars and functions
@@ -163,6 +172,10 @@ This is a tiny wrapper around the Golden.Master method.
 */
 func Master(t Failable, f combinatory.Wrapper, values [][]any, options ...Option) {
 	G.Master(t, f, values, options...)
+}
+
+func Defaults(options ...Option) {
+	G.Defaults(options...)
 }
 
 /*

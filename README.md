@@ -28,6 +28,7 @@ A Go library for snapshot 📸 testing.
     - [Customize the snapshot name](#customize-the-snapshot-name)
     - [Customize the folder to store the snapshot](#customize-the-folder-to-store-the-snapshot)
     - [Customize the extension of the snapshot file](#customize-the-extension-of-the-snapshot-file)
+    - [Set your own defaults](#set-your-own-defaults)
 - [Dealing with Non-Deterministic output](#dealing-with-non-deterministic-output)
     - [Replacing fields in Json Files with PathScrubbers](#replacing-fields-in-json-files-with-pathscrubbers)
     - [Caveats](#caveats)
@@ -54,13 +55,16 @@ This is useful for:
 **Roadmap/Pending features**:
 
 * Defaults to Go conventions (i.e.: testdata folder instead of __snapshots)
+* Global defaults: golden.Folder and golden.Extension can be set as global default:
+
+```go
+golden.Defaults(golden.Folder("__other_folder"))
+```
 
 For future releases:
 
 * Ability and API to use custom reporters.
 * Ability and API to use custom normalizers.
-* Global options that apply to all tests.
-* Better scoping of Scrubbers for JSON content, using paths.
 
 **Usage advice**: Ready for use.
 
@@ -493,7 +497,7 @@ This is useful if you need:
 
 ### Customize the folder to store the snapshot
 
-You can customize the snapshot name, by passing the option `golden.Folder()`:
+You can customize the snapshots folder, by passing the option `golden.Folder()`:
 
 ```go
 func TestSomething(t *testing.T) {
@@ -519,7 +523,7 @@ This will generate the snapshot in `special/my_snapshot.snap` in the same packag
 
 ### Customize the extension of the snapshot file
 
-You can customize the snapshot name, by passing `golden.Extension()`:
+You can customize the snapshot extension, by passing `golden.Extension()`:
 
 ```go
 func TestSomething(t *testing.T) {
@@ -532,6 +536,35 @@ func TestSomething(t *testing.T) {
 This will generate the snapshot in `special/TestSomething.json` in the same package of the test.
 
 This option is useful if your snapshot can be files of a certain type, like CSV, JSON, HTML, or similar. Most of IDE will automatically apply syntax coloring and other goodies to inspect those files based on extension. Also, opening them in specific applications or passing them around to use as examples will be easier with the right extension.
+
+### Set your own defaults
+
+You can customize a **default snapshots folder**, by passing the option `golden.Folder()` to `Defaults`:
+
+```go
+func TestSomething(t *testing.T) {
+    output := SomeFunction("param1", "param2")
+    
+    golden.Defaults(golden.Folder("special"))
+    golden.Verify(t, output)
+}
+```
+
+This will generate the subsequent snapshots inside `special/` folder in the same package as the test.
+
+You can customize the **default snapshot extension**, by passing `golden.Extension()` to `Defaults()`:
+
+```go
+func TestSomething(t *testing.T) {
+    output := SomeFunction("param1", "param2")
+    
+    golden.Defaults(golden.Extension(".json"))
+    golden.Verify(t, output)
+}
+```
+
+This will generate the snapshots with the `.json` extension.
+
 
 ## Dealing with Non-Deterministic output
 

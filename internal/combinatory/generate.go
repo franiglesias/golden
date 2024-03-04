@@ -20,7 +20,7 @@ func Generate(arr [][]any) [][]any {
 		for _, value := range parameter {
 			// append the value to each combination
 			for _, combination := range result {
-				temp = append(temp, append(combination, value))
+				temp = append(temp, append([]any{}, append(combination, value)...))
 			}
 		}
 		// update result

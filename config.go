@@ -7,6 +7,7 @@ type Config struct {
 	name      string
 	ext       string
 	approve   bool
+	reporter  DiffReporter
 	scrubbers []Scrubber
 }
 

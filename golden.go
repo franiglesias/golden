@@ -42,15 +42,15 @@ func (g *Golden) Verify(t Failable, s any, options ...Option) {
 	name := conf.snapshotPath(t)
 
 	if conf.approvalMode() {
-		g.approvalFlow(t, name, subject)
+		g.approvalFlow(t, name, subject, conf)
 	} else {
-		g.verifyFlow(t, name, subject)
+		g.verifyFlow(t, name, subject, conf)
 	}
 
 	g.Unlock()
 }
 
-func (g *Golden) approvalFlow(t Failable, name string, subject string) {
+func (g *Golden) approvalFlow(t Failable, name string, subject string, conf Config) {
 	var previous string
 	if g.snapshotExists(name) {
 		previous = g.readSnapshot(name)
@@ -58,10 +58,10 @@ func (g *Golden) approvalFlow(t Failable, name string, subject string) {
 
 	g.writeSnapshot(name, subject)
 
-	t.Errorf(approvalHeader, g.reportDiff(previous, subject))
+	t.Errorf(approvalHeader, conf.reporter.Differences(previous, subject))
 }
 
-func (g *Golden) verifyFlow(t Failable, name string, subject string) {
+func (g *Golden) verifyFlow(t Failable, name string, subject string, conf Config) {
 	if !g.snapshotExists(name) {
 		g.writeSnapshot(name, subject)
 	}
@@ -69,7 +69,7 @@ func (g *Golden) verifyFlow(t Failable, name string, subject string) {
 	snapshot := g.readSnapshot(name)
 
 	if snapshot != subject {
-		t.Errorf(verifyHeader, g.reportDiff(snapshot, subject))
+		t.Errorf(verifyHeader, conf.reporter.Differences(snapshot, subject))
 	}
 }
 
@@ -93,10 +93,6 @@ func (g *Golden) Master(t Failable, f combinatory.Wrapper, values [][]any, optio
 	g.global.ext = ".snap.json"
 	subject := combinatory.Master(f, values...)
 	g.Verify(t, subject, options...)
-}
-
-func (g *Golden) reportDiff(snapshot string, subject string) string {
-	return g.reporter.Differences(snapshot, subject)
 }
 
 func (g *Golden) normalize(s any, scrubbers []Scrubber) string {
@@ -195,14 +191,14 @@ from the beginning. Usually for testing purposes only
 func NewUsingFs(fs vfs.Vfs) *Golden {
 	return &Golden{
 		global: Config{
-			folder:  "testdata",
-			name:    "",
-			ext:     ".snap",
-			approve: false,
+			folder:   "testdata",
+			name:     "",
+			ext:      ".snap",
+			approve:  false,
+			reporter: LineDiffReporter{},
 		},
 		fs:         fs,
 		normalizer: JsonNormalizer{},
-		reporter:   LineDiffReporter{},
 	}
 }
 

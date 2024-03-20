@@ -12,6 +12,10 @@ const noDifferences = "No differences found."
 type CharDiffReporter struct {
 }
 
+func NewCharDiffReporter() CharDiffReporter {
+	return CharDiffReporter{}
+}
+
 func (c CharDiffReporter) Differences(want, got string) string {
 	if want == got {
 		return noDifferences
@@ -21,6 +25,10 @@ func (c CharDiffReporter) Differences(want, got string) string {
 }
 
 type LineDiffReporter struct{}
+
+func NewLineDiffReporter() LineDiffReporter {
+	return LineDiffReporter{}
+}
 
 func (LineDiffReporter) Differences(want, got string) string {
 	if want == got {

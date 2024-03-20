@@ -28,6 +28,7 @@ A Go library for snapshot 📸 testing.
     - [Customize the snapshot name](#customize-the-snapshot-name)
     - [Customize the folder to store the snapshot](#customize-the-folder-to-store-the-snapshot)
     - [Customize the extension of the snapshot file](#customize-the-extension-of-the-snapshot-file)
+    - [Customize the Reporter for showing differences](#customize-the-reporter-for-showing-differences)
     - [Set your own defaults](#set-your-own-defaults)
 - [Dealing with Non-Deterministic output](#dealing-with-non-deterministic-output)
     - [Replacing fields in Json Files with PathScrubbers](#replacing-fields-in-json-files-with-pathscrubbers)
@@ -52,6 +53,24 @@ This is useful for:
 
 **Last changes**
 
+* Ability and API to use custom reporters. You can use different reporters, in line with your preferences or use cases. They can be passed as options in Verify or as Defaults.
+
+```go
+golden.Verify(complexObject, golden.Reporter(NewBetterDiffReporter()))
+```
+
+or
+
+```go
+golden.Defaults(golden.Reporter(NewBetterDiffReporter()))
+```
+
+Also, we added a new reporter implemented from Codeberg Go-Diff that looks pretty nice.
+
+https://pkg.go.dev/codeberg.org/h7c/go-diff
+
+* Fixed a problem in `Master` where some combinations using slices could be incorrect. Thanks to @josephbuchma, for finding and fixing it.
+
 * Defaults to Go conventions (i.e.: testdata folder instead of __snapshots)
 * Global defaults: golden.Folder and golden.Extension can be set as global default. [Details about how to use this](#set-your-own-defaults):
 
@@ -59,13 +78,10 @@ This is useful for:
 golden.Defaults(golden.Folder("__other_folder"))
 ```
 
-
-
 **Roadmap/Pending features**:
 
 For future releases:
 
-* Ability and API to use custom reporters.
 * Ability and API to use custom normalizers.
 
 **Usage advice**: Ready for use.
@@ -538,6 +554,26 @@ func TestSomething(t *testing.T) {
 This will generate the snapshot in `special/TestSomething.json` in the same package of the test.
 
 This option is useful if your snapshot can be files of a certain type, like CSV, JSON, HTML, or similar. Most of IDE will automatically apply syntax coloring and other goodies to inspect those files based on extension. Also, opening them in specific applications or passing them around to use as examples will be easier with the right extension.
+
+### Customize the Reporter for showing differences
+
+You can customize the reporter used, by passing `golden.Reporter()`:
+
+```go
+func TestSomething(t *testing.T) {
+    output := SomeFunction("param1", "param2")
+    
+    golden.Verify(t, output, golden.Reporter(golden.NewBetterDiffReporter()))
+}
+```
+
+Available reporters:
+
+* `golden.NewCharDiffReporter()`
+* `golden.NewLineDiffReporter()` (default)
+* `golden.NewBetterDiffReporter()`: nice reporter with color support
+* `golden.NewBetterDiffReporterWithoutColor()`: the same reporter without color output
+
 
 ### Set your own defaults
 

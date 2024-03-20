@@ -73,6 +73,16 @@ func Extension(extension string) Option {
 	}
 }
 
+func Reporter(reporter DiffReporter) Option {
+	return func(c *Config) Option {
+		previous := c.reporter
+		c.reporter = reporter
+		return func(c *Config) Option {
+			return Reporter(previous)
+		}
+	}
+}
+
 /*
 Combine is a convenience function that wraps the values you pass to golden.Master() tests.
 

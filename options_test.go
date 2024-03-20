@@ -35,7 +35,7 @@ func TestOptions(t *testing.T) {
 	})
 
 	t.Run("should configure reporter", func(t *testing.T) {
-		c := Config{reporter: LineDiffReporter{}}
+		c := Config{reporter: NewLineDiffReporter()}
 		option := Reporter(NewBetterDiffReporter())
 		option(&c)
 		assert.IsType(t, BetterDiffReporter{}, c.reporter)

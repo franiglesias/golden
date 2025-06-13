@@ -4,9 +4,9 @@ A Go library for snapshot 📸 testing.
 
 ## Reference documentation
 
-[Reference](https://pkg.go.dev/github.com/franiglesias/golden)
-[Deep Wiki AI generated documentation](https://deepwiki.com/franiglesias/golden)
-[Cookbook: recipes and how-tos](doc/cookbook.md) (WIP)
+- [Reference](https://pkg.go.dev/github.com/franiglesias/golden)
+- [Deep Wiki AI generated documentation](https://deepwiki.com/franiglesias/golden)
+- [Cookbook: recipes and how-tos](doc/cookbook.md) (WIP)
 
 ## Contents
 
